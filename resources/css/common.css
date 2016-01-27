@@ -1,0 +1,206 @@
+/*
+	Eric Meyer's Reset CSS v2.0
+	
+	NOTICE: This copy of the CSS reset has been modified
+	to make main tag "display: block" because the default in
+	even IE 11 is "display: inline", which is not correct.
+*/
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,embed,figure,figcaption,footer,header,hgroup,menu,nav,output,ruby,section,summary,time,mark,audio,video{border:0;font-size:100%;font:inherit;vertical-align:baseline;margin:0;padding:0}article,aside,details,figcaption,figure,footer,header,hgroup,main,menu,nav,section{display:block}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:none}table{border-collapse:collapse;border-spacing:0}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	font: 14px/1.5em sans-serif;
+}
+
+header,
+main,
+footer {
+	width: 85%;
+	max-width: 900px;
+	margin: 0 auto;
+}
+
+header {
+	margin-bottom: 50px;
+}
+
+h1 {
+	font-size: 48px;
+	font-weight: bold;
+	line-height: 1.5em;
+	text-align: center;
+}
+
+h2 {
+	font-size: 18px;
+	line-height: 1.3em;
+	text-align: center;
+	margin-bottom: 25px;
+}
+
+p {
+	max-width: 625px;
+	margin: 0 auto;
+}
+
+code {
+	font-family: 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace;
+	padding: 1px 3px;
+	background-color: #EEE;
+	font-size: 12px;
+}
+
+.clr-red {
+	color: #CC0000;
+}
+
+#input,
+#output {
+	border: 1px solid #CCC;
+	padding: 10px;
+	outline: none;
+	font: 16px/1.5em Consolas, Menlo, Monaco, 'Courier New', monospace;
+	white-space: pre;
+	tab-size: 4;
+}
+
+#input {
+	width: 100%;
+	margin-bottom: 50px;
+	overflow-y: auto;
+	resize: vertical;
+}
+
+#output {
+	background-color: #F0F8FF; /* "aliceblue" - happened on that by chance choosing a color in chrome inspector tools */
+	word-wrap: break-word;
+	font-size: 14px;
+}
+
+footer {
+	margin: 50px auto;
+	text-align: center;
+}
+/*
+body {
+	font: 14px/1.25em sans-serif;
+}
+
+code {
+	font-family: 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace;
+	padding: 0 3px;
+}
+
+header {
+	padding: 2%;
+}
+
+.intro {
+	width: 50%;
+	float: left;
+}
+
+h1 {
+	font-size: 34px;
+	font-weight: bold;
+	line-height: 1.5em;
+}
+
+h2 {
+	font-size: 24px;
+	line-height: 1.3em;
+}
+
+p {
+	margin-top: 20px;
+	line-height: 1.5em;
+}
+
+#brand {
+	width: 45%;
+	max-width: 500px;
+	float: right;
+	margin-left: 5%;
+}
+
+table {
+	width: 100%;
+	table-layout: fixed;
+}
+
+th {
+	padding: 15px;
+	background: #375EAB;
+	text-align: center;
+	color: #FFF;
+	font-size: 20px;
+}
+
+td {
+	width: 50%;
+	vertical-align: top;
+}
+
+#input,
+#output {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-o-box-sizing: border-box;
+	box-sizing: border-box;
+
+	white-space: pre;
+	width: 100%;
+	display: block;
+	padding: 3%;
+	font: 14px/1.5em 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace;
+	outline: none;
+	border: none;
+	resize: vertical;
+	height: 500px;
+	height: 65vh;
+	overflow: scroll;
+	tab-size: 4;
+}
+
+#input {
+	background: #ECF2F5;
+	border-right: 2px solid #AAA;
+}
+
+#output {
+	background: #E0EBF5;
+}
+
+footer {
+	color: #888;
+	text-align: center;
+	padding: 75px 0 50px;
+	line-height: 2em;
+}
+
+
+.clear {
+	clear: both;
+}
+
+
+@media (max-width: 1000px) {
+	header {
+		padding: 4%;
+	}
+
+	.intro,
+	#brand {
+		float: none;
+		width: 100%;
+	}
+
+	#brand {
+		margin: 40px auto;
+		display: block;
+	}
+}
+*/

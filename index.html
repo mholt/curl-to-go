@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>curl-to-Go: Convert curl commands to Go code</title>
+		<meta charset="utf-8">
+		<script src="resources/js/jquery.min.js"></script>
+		<script src="resources/js/highlight.pack.js"></script>
+		<script src="resources/js/curl-to-go.js"></script>
+		<script src="resources/js/common.js"></script>
+		<script src="https://mholt.github.io/json-to-go/resources/js/json-to-go.js"></script>
+		<link rel="stylesheet" href="resources/css/color-brewer.css">
+		<link rel="stylesheet" href="resources/css/common.css">
+	</head>
+	<body>
+
+		<header>
+			<h1>curl-to-Go</h1>
+			<h2>Instantly convert <a href="http://curl.haxx.se/">curl</a> commands to <a href="https://golang.org/">Go</a> code</h2>
+
+			<p>
+				This tool turns a curl command into Go code. It currently handles the following options: -X/--request, -d/--data, -H/--header, and -u/--user. It also understands JSON content types. As always, be sure to <code>go fmt</code> your code and pay attention to imports. For a quick way to generate a Go struct from JSON, see <a href="https://mholt.github.io/json-to-go">JSON-to-Go</a>. Also feel free to <a href="https://github.com/mholt/curl-to-go">contribute on GitHub</a>.
+			</p>
+		</header>
+
+		<main>
+			<textarea id="input" rows="4" placeholder="Paste curl here"></textarea>
+			<div id="output"></div>
+		</main>
+
+
+		<footer>
+			&copy; 2016 Matt Holt - <a href="https://github.com/mholt/curl-to-go">View on GitHub</a>
+		</footer>
+
+	</body>
+</html>
