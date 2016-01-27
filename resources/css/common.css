@@ -43,7 +43,7 @@ h2 {
 
 p {
 	max-width: 625px;
-	margin: 0 auto;
+	margin: 10px auto;
 }
 
 code {
@@ -51,6 +51,15 @@ code {
 	padding: 1px 3px;
 	background-color: #EEE;
 	font-size: 12px;
+}
+
+.examples {
+	max-width: none;
+	text-align: center;
+}
+
+.examples a {
+	margin: 0 3px;
 }
 
 .clr-red {
@@ -84,123 +93,3 @@ footer {
 	margin: 50px auto;
 	text-align: center;
 }
-/*
-body {
-	font: 14px/1.25em sans-serif;
-}
-
-code {
-	font-family: 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace;
-	padding: 0 3px;
-}
-
-header {
-	padding: 2%;
-}
-
-.intro {
-	width: 50%;
-	float: left;
-}
-
-h1 {
-	font-size: 34px;
-	font-weight: bold;
-	line-height: 1.5em;
-}
-
-h2 {
-	font-size: 24px;
-	line-height: 1.3em;
-}
-
-p {
-	margin-top: 20px;
-	line-height: 1.5em;
-}
-
-#brand {
-	width: 45%;
-	max-width: 500px;
-	float: right;
-	margin-left: 5%;
-}
-
-table {
-	width: 100%;
-	table-layout: fixed;
-}
-
-th {
-	padding: 15px;
-	background: #375EAB;
-	text-align: center;
-	color: #FFF;
-	font-size: 20px;
-}
-
-td {
-	width: 50%;
-	vertical-align: top;
-}
-
-#input,
-#output {
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	-o-box-sizing: border-box;
-	box-sizing: border-box;
-
-	white-space: pre;
-	width: 100%;
-	display: block;
-	padding: 3%;
-	font: 14px/1.5em 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace;
-	outline: none;
-	border: none;
-	resize: vertical;
-	height: 500px;
-	height: 65vh;
-	overflow: scroll;
-	tab-size: 4;
-}
-
-#input {
-	background: #ECF2F5;
-	border-right: 2px solid #AAA;
-}
-
-#output {
-	background: #E0EBF5;
-}
-
-footer {
-	color: #888;
-	text-align: center;
-	padding: 75px 0 50px;
-	line-height: 2em;
-}
-
-
-.clear {
-	clear: both;
-}
-
-
-@media (max-width: 1000px) {
-	header {
-		padding: 4%;
-	}
-
-	.intro,
-	#brand {
-		float: none;
-		width: 100%;
-	}
-
-	#brand {
-		margin: 40px auto;
-		display: block;
-	}
-}
-*/
