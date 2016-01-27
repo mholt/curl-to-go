@@ -226,7 +226,7 @@ function curlToGo(curl) {
 
 	// goEsc escapes characters in s so that it is safe to use s in a "quoted string" in a Go program
 	function goEsc(s) {
-		return s.replace('"', '\\"');
+		return s.replace('"', '\\"').replace('\\', '\\\\');
 	}
 }
 
@@ -274,7 +274,7 @@ function parseCommand(input, options) {
 				result[flagName] = [];
 			}
 			cursor++; // skip the flag name
-			if (nextStringIsFlag() && boolFlag(flagName))
+			if (boolFlag(flagName))
 				result[flagName] = true;
 			else if (Array.isArray(result[flagName]))
 				result[flagName].push(nextString());
@@ -286,7 +286,7 @@ function parseCommand(input, options) {
 	function longFlag() {
 		cursor += 2; // skip leading dashes
 		var flagName = nextString("=");
-		if (nextStringIsFlag() && boolFlag(flagName))
+		if (boolFlag(flagName))
 			result[flagName] = true;
 		else {
 			if (typeof result[flagName] == 'undefined') {
@@ -302,19 +302,6 @@ function parseCommand(input, options) {
 	// storing it in the result.
 	function unflagged() {
 		result._.push(nextString());
-	}
-
-	// nextStringIsFlag determines whether the next string
-	// (including the current character) is a flag or part
-	// of the current flag set. It returns false if there
-	// is whitespace and then a non-flag string.
-	function nextStringIsFlag() {
-		var i = cursor;
-		if (i >= input.length || !whitespace(input[i])) // multiple short flags together ("-xzf")
-			return true;
-		while (i < input.length && whitespace(input[i])) // skip whitespace to find next string value
-			i++;
-		return i < input.length && input[i] == "-"; // next string must start with "-" to be a flag
 	}
 
 	// boolFlag returns whether a flag is known to be boolean type
@@ -381,5 +368,3 @@ function parseCommand(input, options) {
 		return ch == " " || ch == "\t" || ch == "\n" || ch == "\r";
 	}
 }
-
-// curl -svo /dev/null -H "Key: Val" <URL>
