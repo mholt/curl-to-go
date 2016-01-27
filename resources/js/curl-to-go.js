@@ -99,7 +99,8 @@ function curlToGo(curl) {
 					else if (result.go) {
 						// valid JSON, so create a struct to hold it
 						go += result.go+'\n\ndata := Payload{\n\t// fill struct\n}\n';
-						go += defaultPayloadVar+', err := json.Marshal(data)\n'+err+'\n';
+						go += 'payloadBytes, err := json.Marshal(data)\n'+err;
+						go += defaultPayloadVar+' := bytes.NewReader(payloadBytes)\n\n';
 					}
 				} else {
 					// not a json Content-Type, so treat as string
@@ -156,7 +157,7 @@ function curlToGo(curl) {
 	function extractRelevantPieces(cmd) {
 		var relevant = {
 			url: "",
-			method: "GET",
+			method: "",
 			headers: [],
 			data: {}
 		};
@@ -181,6 +182,8 @@ function curlToGo(curl) {
 		var dataAscii = [];
 		var dataFiles = [];
 		var loadData = function(d) {
+			if (!relevant.method)
+				relevant.method = "POST";
 			for (var i = 0; i < d.length; i++)
 			{
 				if (d[i].length > 0 && d[i][0] == "@")
@@ -214,6 +217,9 @@ function curlToGo(curl) {
 			relevant.basicAuth = { user: basicAuthString, pass: "<PASSWORD>" };
 		}
 
+		// default to GET if nothing else specified
+		if (!relevant.method)
+			relevant.method = "GET";
 
 		return relevant;
 	}
@@ -237,8 +243,8 @@ function parseCommand(input, options) {
 	}
 
 	var result = {_: []}, // what we return
-		cursor = 0,       // iterator position
-		token = "";       // current token (word or quoted string) being built
+	    cursor = 0,       // iterator position
+	    token = "";       // current token (word or quoted string) being built
 
 	// trim leading $ or # that may have been left in
 	input = input.trim();
@@ -321,7 +327,7 @@ function parseCommand(input, options) {
 	// unescaped whitespace is the end of the string, but endChar can
 	// be used to specify another end-of-string.
 	function nextString(endChar) {
-		for (; cursor < input.length && whitespace(input[cursor]); cursor++);
+		for (; cursor < input.length && whitespace(input[cursor]); cursor++); // skip whitespace
 
 		var str = "";
 
@@ -338,8 +344,8 @@ function parseCommand(input, options) {
 		for (; cursor < input.length; cursor++) {
 			if (quoted) {
 				if (input[cursor] == quoteCh && !escaped) {
-					quoted = false;
-					continue;
+					cursor++; // skip closing quote
+					return str;
 				}
 			}
 			if (!quoted) {
@@ -352,12 +358,12 @@ function parseCommand(input, options) {
 						return str;
 					}
 				}
-				if (input[cursor] == "\\" && !escaped) {
-					escaped = true;
-				}
 			}
 			str += input[cursor];
 			escaped = false;
+			if (input[cursor] == "\\") {
+				escaped = true;
+			}
 		}
 
 		return str;
