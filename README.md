@@ -3,9 +3,12 @@ curl-to-Go
 
 curl-to-Go is a tool to instantly convert [curl](http://curl.haxx.se) commands to Go code in the browser. It does *not* guarantee high-fidelity conversions, but it's good enough for most API docs that have curl samples.
 
-**[Check it out!](https://mholt.github.io/curl-to-json)** It works inside your browser. Just give the code a once-over since it will need you to flush out some parts like error handling.
-
 This is a sister tool to [JSON-to-Go](https://mholt.github.io/json-to-go), which converts JSON to a Go struct type definition.
+
+
+### Try it
+
+**[Check it out!](https://mholt.github.io/curl-to-go)** It works inside your browser. Just give the code a once-over since it will need you to flush out some parts like error handling.
 
 
 ### FAQ
