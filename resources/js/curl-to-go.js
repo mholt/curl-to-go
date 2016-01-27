@@ -172,6 +172,10 @@ function curlToGo(curl) {
 		if (cmd.header)
 			relevant.headers = relevant.headers.concat(cmd.header);
 
+		// set method to HEAD?
+		if (cmd.I || cmd.head)
+			relevant.method = "HEAD";
+
 		// between -X and --request, prefer the long form I guess
 		if (cmd.request && cmd.request.length > 0)
 			relevant.method = cmd.request[cmd.request.length-1].toUpperCase();
