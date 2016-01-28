@@ -57,10 +57,10 @@ function curlToGo(curl) {
 		else if (method == "HEAD")
 			return 'resp, err := http.Head("'+url+'")\n'+err+deferClose;
 		else
-			return 'req, err := http.NewRequest("'+method+'", "'+url+'", nil)\n'+err+'client := http.Client{}\nresp, err := client.Do(req)\n'+err+deferClose;
+			return 'req, err := http.NewRequest("'+method+'", "'+url+'", nil)\n'+err+'resp, err := http.DefaultClient.Do(req)\n'+err+deferClose;
 	}
 
-	// renderComplex renders Go code that uses http.Client.
+	// renderComplex renders Go code that requires making a http.Request.
 	function renderComplex(req) {
 		var go = "";
 
@@ -138,13 +138,13 @@ function curlToGo(curl) {
 			go += 'req.SetBasicAuth("'+goEsc(req.basicauth.user)+'", "'+goEsc(req.basicauth.pass)+'")\n';
 		}
 
-		// Set headers
+		// set headers
 		for (var name in headers) {
 			go += 'req.Header.Set("'+goEsc(name)+'", "'+goEsc(headers[name])+'")\n';
 		}
 
-		// create the client and execute request
-		go += "\nclient := http.Client{}\nresp, err := client.Do(req)\n";
+		// execute request
+		go += "\nresp, err := http.DefaultClient.Do(req)\n";
 		go += err+deferClose;
 
 		return go;
