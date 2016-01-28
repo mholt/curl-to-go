@@ -236,7 +236,7 @@ function curlToGo(curl) {
 
 	// goEsc escapes characters in s so that it is safe to use s in a "quoted string" in a Go program
 	function goEsc(s) {
-		return s.replace('"', '\\"').replace('\\', '\\\\');
+		return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 	}
 }
 
@@ -363,11 +363,12 @@ function parseCommand(input, options) {
 					}
 				}
 			}
+			if (!escaped && input[cursor] == "\\") {
+				escaped = true;
+				continue
+			}
 			str += input[cursor];
 			escaped = false;
-			if (input[cursor] == "\\") {
-				escaped = true;
-			}
 		}
 
 		return str;
