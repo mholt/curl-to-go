@@ -51,13 +51,13 @@ function curlToGo(curl) {
 	// renderSimple renders a simple HTTP request using net/http convenience methods
 	function renderSimple(method, url) {
 		if (method == "GET")
-			return 'resp, err := http.Get("'+url+'")\n'+err+deferClose;
+			return 'resp, err := http.Get('+goExpandEnv(url)+')\n'+err+deferClose;
 		else if (method == "POST")
-			return 'resp, err := http.Post("'+url+'", "", nil)\n'+err+deferClose;
+			return 'resp, err := http.Post('+goExpandEnv(url)+', "", nil)\n'+err+deferClose;
 		else if (method == "HEAD")
-			return 'resp, err := http.Head("'+url+'")\n'+err+deferClose;
+			return 'resp, err := http.Head('+goExpandEnv(url)+')\n'+err+deferClose;
 		else
-			return 'req, err := http.NewRequest("'+method+'", "'+url+'", nil)\n'+err+'resp, err := http.DefaultClient.Do(req)\n'+err+deferClose;
+			return 'req, err := http.NewRequest('+goExpandEnv(method)+', '+goExpandEnv(url)+', nil)\n'+err+'resp, err := http.DefaultClient.Do(req)\n'+err+deferClose;
 	}
 
 	// renderComplex renders Go code that requires making a http.Request.
@@ -80,7 +80,7 @@ function curlToGo(curl) {
 		var defaultPayloadVar = "body";
 		if (!req.data.ascii && !req.data.files) {
 			// no data; this is easy
-			go += 'req, err := http.NewRequest("'+req.method+'", "'+goEsc(req.url)+'", nil)\n'+err;
+			go += 'req, err := http.NewRequest("'+req.method+'", '+goExpandEnv(req.url)+', nil)\n'+err;
 		} else {
 			var ioReaders = [];
 
@@ -113,7 +113,7 @@ function curlToGo(curl) {
 				var varName = "f";
 				for (var i = 0; i < req.data.files.length; i++) {
 					var thisVarName = (req.data.files.length > 1 ? varName+(i+1) : varName);
-					go += thisVarName+', err := os.Open("'+goEsc(req.data.files[i])+'")\n'+err;
+					go += thisVarName+', err := os.Open('+goExpandEnv(req.data.files[i])+')\n'+err;
 					go += 'defer '+thisVarName+'.Close()\n';
 					ioReaders.push(thisVarName);
 				}
@@ -130,17 +130,17 @@ function curlToGo(curl) {
 				// ascii values first, followed by the files.
 				go += 'payload := io.MultiReader('+ioReaders.join(", ")+')\n';
 			}
-			go += 'req, err := http.NewRequest("'+req.method+'", "'+goEsc(req.url)+'", '+payloadVar+')\n'+err;
+			go += 'req, err := http.NewRequest("'+req.method+'", '+goExpandEnv(req.url)+', '+payloadVar+')\n'+err;
 		}
 
 		// set basic auth
 		if (req.basicauth) {
-			go += 'req.SetBasicAuth("'+goEsc(req.basicauth.user)+'", "'+goEsc(req.basicauth.pass)+'")\n';
+			go += 'req.SetBasicAuth('+goExpandEnv(req.basicauth.user)+', '+goExpandEnv(req.basicauth.pass)+')\n';
 		}
 
 		// set headers
 		for (var name in headers) {
-			go += 'req.Header.Set("'+goEsc(name)+'", "'+goEsc(headers[name])+'")\n';
+			go += 'req.Header.Set('+goExpandEnv(name)+', '+goExpandEnv(headers[name])+')\n';
 		}
 
 		// execute request
@@ -234,7 +234,30 @@ function curlToGo(curl) {
 		});
 	}
 
-	// goEsc escapes characters in s so that it is safe to use s in a "quoted string" in a Go program
+	// goExpandEnv adds surrounding quotes around s to make it a Go string,
+	// escaping any characters as needed. It checks to see if s has an
+	// environment variable in it. If so, it returns s wrapped in a Go
+	// function that expands the environment variable. Otherwise, it
+	// returns s wrapped in quotes and escaped for use in Go strings.
+	// s should not already be escaped! This function always returns a Go
+	// string value.
+	function goExpandEnv(s) {
+		var pos = s.indexOf("$");
+		if (pos > -1)
+		{
+			if (pos > 0 && s[pos-1] == '\\') {
+				// The $ is escaped, so strip the escaping backslash
+				s = s.substr(0, pos-1) + s.substr(pos);
+			} else {
+				// $ is not escaped, so treat it as an env variable
+				return 'os.ExpandEnv("'+goEsc(s)+'")';
+			}
+		}
+		return '"'+goEsc(s)+'"';
+	}
+
+	// goEsc escapes characters in s so that it is safe to use s in
+	// a "quoted string" in a Go program
 	function goEsc(s) {
 		return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 	}
@@ -273,9 +296,12 @@ function parseCommand(input, options) {
 	// flagSet handles flags and it assumes the current cursor
 	// points to a first dash.
 	function flagSet() {
+		// long flag form?
 		if (cursor < input.length-1 && input[cursor+1] == "-") {
 			return longFlag();
 		}
+
+		// if not, parse short flag form
 		cursor++; // skip leading dash
 		while (cursor < input.length && !whitespace(input[cursor]))
 		{
@@ -329,7 +355,10 @@ function parseCommand(input, options) {
 	// space-delimited string value and returns it. If endChar is set,
 	// it will be used to determine the end of the string. Normally just
 	// unescaped whitespace is the end of the string, but endChar can
-	// be used to specify another end-of-string.
+	// be used to specify another end-of-string. This function honors \
+	// as an escape character and does not include it in the value, except
+	// in the special case of the \$ sequence, the backslash is retained
+	// so other code can decide whether to treat as an env var or not.
 	function nextString(endChar) {
 		for (; cursor < input.length && whitespace(input[cursor]); cursor++); // skip whitespace
 
@@ -365,8 +394,11 @@ function parseCommand(input, options) {
 			}
 			if (!escaped && input[cursor] == "\\") {
 				escaped = true;
-				continue
+				// skip the backslash unless the next character is $
+				if (!(cursor < input.length-1 && input[cursor+1] == '$'))
+					continue;
 			}
+			
 			str += input[cursor];
 			escaped = false;
 		}
