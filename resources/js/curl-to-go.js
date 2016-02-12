@@ -98,7 +98,7 @@ function curlToGo(curl) {
 						stringBody(); // not valid JSON, so just treat as a regular string
 					else if (result.go) {
 						// valid JSON, so create a struct to hold it
-						go += result.go+'\n\ndata := Payload{\n\t// fill struct\n}\n';
+						go += result.go+'\n\ndata := Payload {\n\t// fill struct\n}\n';
 						go += 'payloadBytes, err := json.Marshal(data)\n'+err;
 						go += defaultPayloadVar+' := bytes.NewReader(payloadBytes)\n\n';
 					}
