@@ -279,8 +279,7 @@ function parseCommand(input, options) {
 		input = input.substr(1).trim();
 
 	for (cursor = 0; cursor < input.length; cursor++) {
-		if (whitespace(input[cursor]))
-			continue;
+		skipWhitespace();
 		if (input[cursor] == "-") {
 			flagSet();
 		} else {
@@ -360,7 +359,7 @@ function parseCommand(input, options) {
 	// in the special case of the \$ sequence, the backslash is retained
 	// so other code can decide whether to treat as an env var or not.
 	function nextString(endChar) {
-		for (; cursor < input.length && whitespace(input[cursor]); cursor++); // skip whitespace
+		skipWhitespace();
 
 		var str = "";
 
@@ -404,6 +403,16 @@ function parseCommand(input, options) {
 		}
 
 		return str;
+	}
+
+	// skipWhitespace skips whitespace between tokens, taking into account escaped whitespace.
+	function skipWhitespace() {
+		for (; cursor < input.length; cursor++) {
+			while (input[cursor] == "\\" && (cursor < input.length-1 && whitespace(input[cursor+1])))
+				cursor++;
+			if (!whitespace(input[cursor]))
+				break;
+		}
 	}
 
 	// whitespace returns true if ch is a whitespace character.
