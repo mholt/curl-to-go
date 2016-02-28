@@ -367,12 +367,6 @@ function parseCommand(input, options) {
 			quoteCh = "",
 			escaped = false;
 
-		if (input[cursor] == '"' || input[cursor] == "'") {
-			quoted = true;
-			quoteCh = input[cursor];
-			cursor++;
-		}
-
 		for (; cursor < input.length; cursor++) {
 			if (quoted) {
 				if (input[cursor] == quoteCh && !escaped) {
@@ -384,6 +378,11 @@ function parseCommand(input, options) {
 				if (!escaped) {
 					if (whitespace(input[cursor])) {
 						return str;
+					}
+					if (input[cursor] == '"' || input[cursor] == "'") {
+						quoted = true;
+						quoteCh = input[cursor];
+						cursor++;
 					}
 					if (endChar && input[cursor] == endChar) {
 						cursor++; // skip the endChar
