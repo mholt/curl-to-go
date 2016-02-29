@@ -162,8 +162,10 @@ function curlToGo(curl) {
 			data: {}
 		};
 
-		// curl supports multiple URLs but we'll just use the first
-		if (cmd._.length > 1)
+		// prefer --url over unnamed parameter, if it exists; keep first one only
+		if (cmd.url && cmd.url.length > 0)
+			relevant.url = cmd.url[0];
+		else if (cmd._.length > 1)
 			relevant.url = cmd._[1]; // position 1 because index 0 is the curl command itself
 
 		// gather the headers together
@@ -370,8 +372,8 @@ function parseCommand(input, options) {
 		for (; cursor < input.length; cursor++) {
 			if (quoted) {
 				if (input[cursor] == quoteCh && !escaped) {
-					cursor++; // skip closing quote
-					return str;
+					quoted = false;
+					continue;
 				}
 			}
 			if (!quoted) {
