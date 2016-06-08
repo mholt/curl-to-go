@@ -87,6 +87,7 @@ code {
 	background-color: #F0F8FF; /* "aliceblue" - happened on that by chance choosing a color in chrome inspector tools */
 	word-wrap: break-word;
 	font-size: 14px;
+	overflow-x: auto;
 }
 
 footer {

@@ -190,6 +190,7 @@ function curlToGo(curl) {
 		var loadData = function(d) {
 			if (!relevant.method)
 				relevant.method = "POST";
+			relevant.headers.push("Content-Type: application/x-www-form-urlencoded");
 			for (var i = 0; i < d.length; i++)
 			{
 				if (d[i].length > 0 && d[i][0] == "@")
