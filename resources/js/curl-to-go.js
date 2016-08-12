@@ -190,7 +190,19 @@ function curlToGo(curl) {
 		var loadData = function(d) {
 			if (!relevant.method)
 				relevant.method = "POST";
-			relevant.headers.push("Content-Type: application/x-www-form-urlencoded");
+
+			// according to issue #8, curl adds a default Content-Type
+			// header if not set explicitly
+			var hasContentType = false;
+			for (var i = 0; i < relevant.headers.length; i++) {
+				if (relevant.headers[i].indexOf("Content-Type") == 0) {
+					hasContentType = true;
+					break;
+				}
+			}
+			if (!hasContentType)
+				relevant.headers.push("Content-Type: application/x-www-form-urlencoded");
+
 			for (var i = 0; i < d.length; i++)
 			{
 				if (d[i].length > 0 && d[i][0] == "@")
