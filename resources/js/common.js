@@ -40,6 +40,8 @@ $(function()
 		try {
 			var output = curlToGo(input);
 			if (output) {
+				if (typeof gofmt === 'function')
+					output = gofmt(output);
 				var coloredOutput = hljs.highlight("go", output);
 				$('#output').html(coloredOutput.value);
 			}
@@ -61,7 +63,9 @@ $(function()
 		{
 			var range = document.createRange();
 			range.selectNode(this);
-			window.getSelection().addRange(range);
+			var sel = window.getSelection();
+			sel.removeAllRanges(); // Required as of Chrome 58: https://www.chromestatus.com/features/6680566019653632
+			sel.addRange(range);
 		}
 	});
 
