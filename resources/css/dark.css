@@ -1,0 +1,32 @@
+/* 
+Dark mode written by github.com/fronbasal 
+*/ 
+ 
+body { 
+    background: #222; 
+    color: #eee; 
+} 
+ 
+a { 
+    text-decoration: none; 
+    color: #26BE7F; 
+} 
+ 
+textarea { 
+    background: #111; 
+    border: 0; 
+    color: white; 
+} 
+ 
+div#output { 
+    background: #111; 
+} 
+ 
+code { 
+    background: #111; 
+    border-radius: 2px; 
+} 
+ 
+::selection { 
+    background: rgba(255, 255, 255, 0.4); 
+}
