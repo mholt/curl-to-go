@@ -87,7 +87,11 @@ function curlToGo(curl) {
 			// if there's text data...
 			if (req.data.ascii) {
 				var stringBody = function() {
-					go += defaultPayloadVar+' := strings.NewReader(`'+req.data.ascii+'`)\n'
+					if (req.dataType == "raw" ) {
+						go += defaultPayloadVar+' := strings.NewReader("'+req.data.ascii.replace(/\"/g, "\\\"") +'")\n'
+					} else {
+						go += defaultPayloadVar+' := strings.NewReader(`'+req.data.ascii+'`)\n'
+					}
 					ioReaders.push(defaultPayloadVar);
 				}
 
@@ -159,7 +163,8 @@ function curlToGo(curl) {
 			url: "",
 			method: "",
 			headers: [],
-			data: {}
+			data: {},
+			dataType: "string"
 		};
 
 		// prefer --url over unnamed parameter, if it exists; keep first one only
@@ -183,6 +188,10 @@ function curlToGo(curl) {
 			relevant.method = cmd.request[cmd.request.length-1].toUpperCase();
 		else if (cmd.X && cmd.X.length > 0)
 			relevant.method = cmd.X[cmd.X.length-1].toUpperCase(); // if multiple, use last (according to curl docs)
+		else if (cmd["data-binary"] && cmd["data-binary"].length > 0) {
+			relevant.method = "POST"; // if data-binary, user method POST
+			relevant.dataType = "raw"; // if data-binary, post body will be raw
+		}
 
 		// join multiple request body data, if any
 		var dataAscii = [];
@@ -215,6 +224,8 @@ function curlToGo(curl) {
 			loadData(cmd.d);
 		if (cmd.data)
 			loadData(cmd.data);
+		if (cmd["data-binary"])
+			loadData(cmd["data-binary"]);
 		if (dataAscii.length > 0)
 			relevant.data.ascii = dataAscii.join("&");
 		if (dataFiles.length > 0)
@@ -381,10 +392,11 @@ function parseCommand(input, options) {
 		var quoted = false,
 			quoteCh = "",
 			escaped = false;
+		quoteDS = false; // Dollar-Single-Quotes
 
 		for (; cursor < input.length; cursor++) {
 			if (quoted) {
-				if (input[cursor] == quoteCh && !escaped) {
+				if (input[cursor] == quoteCh && !escaped && input[cursor -1] != "\\") {
 					quoted = false;
 					continue;
 				}
@@ -397,6 +409,10 @@ function parseCommand(input, options) {
 					if (input[cursor] == '"' || input[cursor] == "'") {
 						quoted = true;
 						quoteCh = input[cursor];
+						if (str + quoteCh == "$'") {
+							quoteDS = true
+							str = ""
+						}
 						cursor++;
 					}
 					if (endChar && input[cursor] == endChar) {
@@ -405,7 +421,7 @@ function parseCommand(input, options) {
 					}
 				}
 			}
-			if (!escaped && input[cursor] == "\\") {
+			if (!escaped && !quoteDS && input[cursor] == "\\") {
 				escaped = true;
 				// skip the backslash unless the next character is $
 				if (!(cursor < input.length-1 && input[cursor+1] == '$'))
