@@ -3,6 +3,15 @@
 	<head>
 		<title>curl-to-Go: Convert curl commands to Go code</title>
 		<meta charset="utf-8">
+		<script>
+			if ('serviceWorker' in navigator) {
+				navigator.serviceWorker.register('./sw.js').then(function(reg) {
+					console.log('Successfully registered service worker', reg);
+				}).catch(function(err) {
+					console.warn('Error whilst registering service worker', err);
+				})
+			}
+		</script>
 		<script src="resources/js/jquery.min.js"></script>
 		<script src="resources/js/highlight.pack.js"></script>
 		<script src="resources/js/common.js"></script>
