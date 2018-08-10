@@ -64,16 +64,6 @@ function curlToGo(curl) {
 	function renderComplex(req) {
 		var go = "";
 
-		// First, figure out the headers
-		var headers = {};
-		for (var i = 0; i < req.headers.length; i++) {
-			var split = req.headers[i].indexOf(":");
-			if (split == -1) continue;
-			var name = req.headers[i].substr(0, split).trim();
-			var value = req.headers[i].substr(split+1).trim();
-			headers[toTitleCase(name)] = value;
-		}
-
 		// load body data
 		// KNOWN ISSUE: -d and --data are treated like --data-binary in
 		// that we don't strip out carriage returns and newlines.
@@ -95,7 +85,7 @@ function curlToGo(curl) {
 					ioReaders.push(defaultPayloadVar);
 				}
 
-				if (headers["Content-Type"] && headers["Content-Type"].indexOf("json") > -1) {
+				if (req.headers["Content-Type"] && req.headers["Content-Type"].indexOf("json") > -1) {
 					// create a struct for the JSON
 					var result = jsonToGo(req.data.ascii, "Payload");
 					if (result.error)
@@ -142,9 +132,16 @@ function curlToGo(curl) {
 			go += 'req.SetBasicAuth('+goExpandEnv(req.basicauth.user)+', '+goExpandEnv(req.basicauth.pass)+')\n';
 		}
 
+		// if a Host header was set, we need to specify that specially
+		// (see the godoc for the http.Request.Host field) - issue #15
+		if (req.headers["Host"]) {
+			go += 'req.Host = "'+req.headers["Host"]+'"\n';
+			delete req.headers["Host"];
+		}
+
 		// set headers
-		for (var name in headers) {
-			go += 'req.Header.Set('+goExpandEnv(name)+', '+goExpandEnv(headers[name])+')\n';
+		for (var name in req.headers) {
+			go += 'req.Header.Set('+goExpandEnv(name)+', '+goExpandEnv(req.headers[name])+')\n';
 		}
 
 		// execute request
@@ -178,6 +175,7 @@ function curlToGo(curl) {
 			relevant.headers = relevant.headers.concat(cmd.H);
 		if (cmd.header)
 			relevant.headers = relevant.headers.concat(cmd.header);
+		relevant.headers = parseHeaders(relevant.headers)
 
 		// set method to HEAD?
 		if (cmd.I || cmd.head)
@@ -202,15 +200,17 @@ function curlToGo(curl) {
 
 			// according to issue #8, curl adds a default Content-Type
 			// header if not set explicitly
-			var hasContentType = false;
-			for (var i = 0; i < relevant.headers.length; i++) {
-				if (relevant.headers[i].indexOf("Content-Type") == 0) {
-					hasContentType = true;
-					break;
-				}
-			}
-			if (!hasContentType)
-				relevant.headers.push("Content-Type: application/x-www-form-urlencoded");
+			// var hasContentType = false;
+			// for (var i = 0; i < relevant.headers.length; i++) {
+			// 	if (relevant.headers[i].indexOf("Content-Type") == 0) {
+			// 		hasContentType = true;
+			// 		break;
+			// 	}
+			// }
+			// if (!hasContentType)
+			// 	relevant.headers.push("Content-Type: application/x-www-form-urlencoded");
+			if (!relevant.headers["Content-Type"])
+				relevant.headers["Content-Type"] = "application/x-www-form-urlencoded";
 
 			for (var i = 0; i < d.length; i++)
 			{
@@ -252,6 +252,20 @@ function curlToGo(curl) {
 			relevant.method = "GET";
 
 		return relevant;
+	}
+
+	// parseHeaders converts an array of header strings (like "Content-Type: foo")
+	// into a map of key/values. It assumes header field names are unique.
+	function parseHeaders(stringHeaders) {
+		var headers = {};
+		for (var i = 0; i < stringHeaders.length; i++) {
+			var split = stringHeaders[i].indexOf(":");
+			if (split == -1) continue;
+			var name = stringHeaders[i].substr(0, split).trim();
+			var value = stringHeaders[i].substr(split+1).trim();
+			headers[toTitleCase(name)] = value;
+		}
+		return headers;
 	}
 
 	function toTitleCase(str) {
