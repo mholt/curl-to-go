@@ -41,7 +41,7 @@ function curlToGo(curl) {
 
 	var req = extractRelevantPieces(cmd);
 
-	if (req.headers.length == 0 && !req.data.ascii && !req.data.files && !req.basicauth) {
+	if (Object.keys(req.headers).length == 0 && !req.data.ascii && !req.data.files && !req.basicauth) {
 		return promo+"\n"+renderSimple(req.method, req.url);
 	} else {
 		return promo+"\n\n"+renderComplex(req);
@@ -199,16 +199,7 @@ function curlToGo(curl) {
 				relevant.method = "POST";
 
 			// according to issue #8, curl adds a default Content-Type
-			// header if not set explicitly
-			// var hasContentType = false;
-			// for (var i = 0; i < relevant.headers.length; i++) {
-			// 	if (relevant.headers[i].indexOf("Content-Type") == 0) {
-			// 		hasContentType = true;
-			// 		break;
-			// 	}
-			// }
-			// if (!hasContentType)
-			// 	relevant.headers.push("Content-Type: application/x-www-form-urlencoded");
+			// header if one is not set explicitly
 			if (!relevant.headers["Content-Type"])
 				relevant.headers["Content-Type"] = "application/x-www-form-urlencoded";
 

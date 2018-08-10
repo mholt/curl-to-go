@@ -22,7 +22,7 @@ Mostly simple HTTP commands (headers, basic auth, body, etc).
 
 #### Will you consider supporting *this-or-that* flag?
 
-curl has like a bajillion options, so don't expect all of them to be implemented; just the most common/important ones to stub out code from API samples and docs, etc. But feel free to open an issue or submit a pull request!
+curl has like a bajillion options, so don't expect all of them to be implemented; just the most common/important ones to stub out code from API samples and docs, etc. But feel free to open an issue or submit a pull request! To request a new flag, please provide the equivalent Go code.
 
 
 

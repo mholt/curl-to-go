@@ -20,11 +20,11 @@ main,
 footer {
 	width: 85%;
 	max-width: 900px;
-	margin: 0 auto;
+	margin: 50px auto;
 }
 
 header {
-	margin-bottom: 50px;
+	margin-top: 0;
 }
 
 h1 {
