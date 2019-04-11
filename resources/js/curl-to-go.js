@@ -44,7 +44,6 @@ function curlToGo(curl) {
 	if (Object.keys(req.headers).length == 0 && !req.data.ascii && !req.data.files && !req.basicauth && !req.insecure) {
 		return promo+"\n"+renderSimple(req.method, req.url);
 	} else {
-		console.log(promo+"\n\n"+renderComplex(req));
 		return promo+"\n\n"+renderComplex(req);
 	}
 
