@@ -41,14 +41,11 @@ function curlToGo(curl) {
 
 	var req = extractRelevantPieces(cmd);
 
-	var res = promo;
-	if (cmd['k'] || cmd['insecure']) {
-		res += "\nhttp.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}\n\n";
-	}
-	if (Object.keys(req.headers).length == 0 && !req.data.ascii && !req.data.files && !req.basicauth) {
-		return res+"\n\n"+renderSimple(req.method, req.url);
+	if (Object.keys(req.headers).length == 0 && !req.data.ascii && !req.data.files && !req.basicauth && !req.insecure) {
+		return promo+"\n"+renderSimple(req.method, req.url);
 	} else {
-		return res+"\n\n"+renderComplex(req);
+		console.log(promo+"\n\n"+renderComplex(req));
+		return promo+"\n\n"+renderComplex(req);
 	}
 
 
@@ -67,6 +64,20 @@ function curlToGo(curl) {
 	// renderComplex renders Go code that requires making a http.Request.
 	function renderComplex(req) {
 		var go = "";
+
+		// init client name
+		var clientName = "http.DefaultClient";
+
+		// insecure
+		// -k or --insecure
+		if (req.insecure) {
+			go += 'tr := &http.Transport{\n' +
+				'        TLSClientConfig: &tls.Config{InsecureSkipVerify: true},\n' +
+				'    }\n' +
+				'    client := &http.Client{Transport: tr}\n\n';
+
+			clientName = "client";
+		}
 
 		// load body data
 		// KNOWN ISSUE: -d and --data are treated like --data-binary in
@@ -149,7 +160,7 @@ function curlToGo(curl) {
 		}
 
 		// execute request
-		go += "\nresp, err := http.DefaultClient.Do(req)\n";
+		go += "\nresp, err := "+clientName+".Do(req)\n";
 		go += err+deferClose;
 
 		return go;
@@ -165,7 +176,8 @@ function curlToGo(curl) {
 			method: "",
 			headers: [],
 			data: {},
-			dataType: "string"
+			dataType: "string",
+			insecure: false
 		};
 
 		// prefer --url over unnamed parameter, if it exists; keep first one only
@@ -245,6 +257,10 @@ function curlToGo(curl) {
 		// default to GET if nothing else specified
 		if (!relevant.method)
 			relevant.method = "GET";
+
+		if (cmd.k || cmd.insecure) {
+			relevant.insecure = true;
+		}
 
 		return relevant;
 	}
