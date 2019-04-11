@@ -41,10 +41,14 @@ function curlToGo(curl) {
 
 	var req = extractRelevantPieces(cmd);
 
+	var res = promo;
+	if (cmd['k'] || cmd['insecure']) {
+		res += "\nhttp.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}\n\n";
+	}
 	if (Object.keys(req.headers).length == 0 && !req.data.ascii && !req.data.files && !req.basicauth) {
-		return promo+"\n"+renderSimple(req.method, req.url);
+		return res+"\n\n"+renderSimple(req.method, req.url);
 	} else {
-		return promo+"\n\n"+renderComplex(req);
+		return res+"\n\n"+renderComplex(req);
 	}
 
 
@@ -432,7 +436,7 @@ function parseCommand(input, options) {
 				if (!(cursor < input.length-1 && input[cursor+1] == '$'))
 					continue;
 			}
-			
+
 			str += input[cursor];
 			escaped = false;
 		}
