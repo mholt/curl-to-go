@@ -41,7 +41,7 @@ function curlToGo(curl) {
 
 	var req = extractRelevantPieces(cmd);
 
-	if (Object.keys(req.headers).length == 0 && !req.data.ascii && !req.data.files && !req.basicauth) {
+	if (Object.keys(req.headers).length == 0 && !req.data.ascii && !req.data.files && !req.basicauth && !req.insecure) {
 		return promo+"\n"+renderSimple(req.method, req.url);
 	} else {
 		return promo+"\n\n"+renderComplex(req);
@@ -63,6 +63,21 @@ function curlToGo(curl) {
 	// renderComplex renders Go code that requires making a http.Request.
 	function renderComplex(req) {
 		var go = "";
+
+		// init client name
+		var clientName = "http.DefaultClient";
+
+		// insecure
+		// -k or --insecure
+		if (req.insecure) {
+			go += '// TODO: This is insecure; use only in dev environments.\n';
+			go += 'tr := &http.Transport{\n' +
+				'        TLSClientConfig: &tls.Config{InsecureSkipVerify: true},\n' +
+				'    }\n' +
+				'    client := &http.Client{Transport: tr}\n\n';
+
+			clientName = "client";
+		}
 
 		// load body data
 		// KNOWN ISSUE: -d and --data are treated like --data-binary in
@@ -145,7 +160,7 @@ function curlToGo(curl) {
 		}
 
 		// execute request
-		go += "\nresp, err := http.DefaultClient.Do(req)\n";
+		go += "\nresp, err := "+clientName+".Do(req)\n";
 		go += err+deferClose;
 
 		return go;
@@ -161,7 +176,8 @@ function curlToGo(curl) {
 			method: "",
 			headers: [],
 			data: {},
-			dataType: "string"
+			dataType: "string",
+			insecure: false
 		};
 
 		// prefer --url over unnamed parameter, if it exists; keep first one only
@@ -241,6 +257,10 @@ function curlToGo(curl) {
 		// default to GET if nothing else specified
 		if (!relevant.method)
 			relevant.method = "GET";
+
+		if (cmd.k || cmd.insecure) {
+			relevant.insecure = true;
+		}
 
 		return relevant;
 	}
@@ -432,7 +452,7 @@ function parseCommand(input, options) {
 				if (!(cursor < input.length-1 && input[cursor+1] == '$'))
 					continue;
 			}
-			
+
 			str += input[cursor];
 			escaped = false;
 		}
