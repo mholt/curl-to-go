@@ -70,6 +70,7 @@ function curlToGo(curl) {
 		// insecure
 		// -k or --insecure
 		if (req.insecure) {
+			go += '// TODO: This is insecure; use only in dev environments.\n';
 			go += 'tr := &http.Transport{\n' +
 				'        TLSClientConfig: &tls.Config{InsecureSkipVerify: true},\n' +
 				'    }\n' +
