@@ -244,14 +244,19 @@ function curlToGo(curl) {
 			basicAuthString = cmd.user[cmd.user.length-1];
 		else if (cmd.u && cmd.u.length > 0)
 			basicAuthString = cmd.u[cmd.u.length-1];
-		var basicAuthSplit = basicAuthString.indexOf(":");
-		if (basicAuthSplit > -1) {
-			relevant.basicauth = {
-				user: basicAuthString.substr(0, basicAuthSplit),
-				pass: basicAuthString.substr(basicAuthSplit+1)
-			};
-		} else {
-			relevant.basicAuth = { user: basicAuthString, pass: "<PASSWORD>" };
+		// if the -u or --user flags haven't been set then don't set the
+		// basicauth property.
+		if (basicAuthString) {
+			var basicAuthSplit = basicAuthString.indexOf(":");
+			if (basicAuthSplit > -1) {
+				relevant.basicauth = {
+					user: basicAuthString.substr(0, basicAuthSplit),
+					pass: basicAuthString.substr(basicAuthSplit+1)
+				};
+			} else {
+				// the user has not provided a password
+				relevant.basicauth = { user: basicAuthString, pass: "<PASSWORD>" };
+			}
 		}
 
 		// default to GET if nothing else specified
