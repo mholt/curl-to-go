@@ -38,7 +38,7 @@ $(function()
 		}
 
 		try {
-			var output = curlToGo(input);
+			var output = curlToGo(input.replace(/\s*\\(\r\n|\n|\r)\s*/gm," "));
 			if (output) {
 				if (typeof gofmt === 'function')
 					output = gofmt(output);
