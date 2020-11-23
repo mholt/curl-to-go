@@ -7,7 +7,7 @@ This is a sister tool to [JSON-to-Go](https://mholt.github.io/json-to-go), which
 
 ### Try it
 
-**[Check it out!](https://mholt.github.io/curl-to-go)** It works inside your browser. Just give the code a once-over since it will need you to flush out some parts like error handling.
+**[Check it out!](https://mholt.github.io/curl-to-go)** It works inside your browser. Just give the code a once-over since it will need you to flesh out some parts like error handling.
 
 
 ### FAQ
