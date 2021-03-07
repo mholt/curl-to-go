@@ -204,15 +204,19 @@ function curlToGo(curl) {
 			relevant.method = cmd.request[cmd.request.length-1].toUpperCase();
 		else if (cmd.X && cmd.X.length > 0)
 			relevant.method = cmd.X[cmd.X.length-1].toUpperCase(); // if multiple, use last (according to curl docs)
-		else if (cmd["data-binary"] && cmd["data-binary"].length > 0) {
-			relevant.method = "POST"; // if data-binary, user method POST
-			relevant.dataType = "raw"; // if data-binary, post body will be raw
+		else if (
+			(cmd["data-binary"] && cmd["data-binary"].length > 0)
+			|| (cmd["data-raw"] && cmd["data-raw"].length > 0)
+		 ) {
+			 // for --data-binary and --data-raw, use method POST & data-type raw
+			relevant.method = "POST";
+			relevant.dataType = "raw";
 		}
 
 		// join multiple request body data, if any
 		var dataAscii = [];
 		var dataFiles = [];
-		var loadData = function(d) {
+		var loadData = function (d, dataRawFlag = false) {
 			if (!relevant.method)
 				relevant.method = "POST";
 
@@ -221,12 +225,15 @@ function curlToGo(curl) {
 			if (!relevant.headers["Content-Type"])
 				relevant.headers["Content-Type"] = "application/x-www-form-urlencoded";
 
-			for (var i = 0; i < d.length; i++)
-			{
-				if (d[i].length > 0 && d[i][0] == "@")
+			for (var i = 0; i < d.length; i++) {
+				if (
+					d[i].length > 0 && d[i][0] == "@"
+					&& !dataRawFlag // data-raw flag ignores '@' character
+				) {
 					dataFiles.push(d[i].substr(1));
-				else
+				} else {
 					dataAscii.push(d[i]);
+				}
 			}
 		};
 		if (cmd.d)
@@ -235,6 +242,8 @@ function curlToGo(curl) {
 			loadData(cmd.data);
 		if (cmd["data-binary"])
 			loadData(cmd["data-binary"]);
+		if (cmd["data-raw"])
+			loadData(cmd["data-raw"], true)
 		if (dataAscii.length > 0)
 			relevant.data.ascii = dataAscii.join("&");
 		if (dataFiles.length > 0)
