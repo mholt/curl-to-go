@@ -113,7 +113,14 @@ function curlToGo(curl) {
 						go += 'payloadBytes, err := json.Marshal(data)\n'+err;
 						go += defaultPayloadVar+' := bytes.NewReader(payloadBytes)\n\n';
 					}
-				} else {
+				} else if(req.headers["Content-Type"] && req.headers["Content-Type"] == "application/x-www-form-urlencoded") {
+						go += "params := url.Values{}\n"
+						var params = new URLSearchParams(req.data.ascii);
+						params.forEach(function(fvalue, fkey){
+							go += 'params.Add("' + fkey + '", `' + fvalue + '`)\n' 
+						});
+						go += defaultPayloadVar+ ' := strings.NewReader(params.Encode())\n\n'
+				}else {
 					// not a json Content-Type, so treat as string
 					stringBody();
 				}
