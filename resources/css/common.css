@@ -94,3 +94,11 @@ footer {
 	margin: 50px auto;
 	text-align: center;
 }
+
+.copy-div {
+	text-align: right;
+}
+
+.copy-div > a {
+	text-decoration: none;
+}
