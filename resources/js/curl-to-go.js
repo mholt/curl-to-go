@@ -17,51 +17,52 @@ function curlToGo(curl) {
 	// List of curl flags that are boolean typed; this helps with parsing
 	// a command like `curl -abc value` to know whether 'value' belongs to '-c'
 	// or is just a positional argument instead.
+	// https://github.com/curl/curl/blob/f410b9e538129e77607fef1894f96c684a7c8c3b/src/tool_getparam.c#L73-L341
 	var boolOptions = new Set([
-		'disable-epsv', 'no-disable-epsv', 'disallow-username-in-url',
-		'no-disallow-username-in-url', 'epsv', 'no-epsv', 'npn', 'no-npn', 'alpn', 'no-alpn',
-		'compressed', 'no-compressed', 'tr-encoding', 'no-tr-encoding', 'digest', 'no-digest',
-		'negotiate', 'no-negotiate', 'ntlm', 'no-ntlm', 'ntlm-wb', 'no-ntlm-wb', 'basic',
-		'no-basic', 'anyauth', 'no-anyauth', 'wdebug', 'no-wdebug', 'ftp-create-dirs',
-		'no-ftp-create-dirs', 'create-dirs', 'no-create-dirs', 'proxy-ntlm', 'no-proxy-ntlm',
-		'crlf', 'no-crlf', 'haproxy-protocol', 'no-haproxy-protocol', 'disable-eprt',
-		'no-disable-eprt', 'eprt', 'no-eprt', 'xattr', 'no-xattr', 'ftp-ssl', 'no-ftp-ssl',
-		'ssl', 'no-ssl', 'ftp-pasv', 'no-ftp-pasv', 'tcp-nodelay', 'no-tcp-nodelay', 'proxy-digest',
-		'no-proxy-digest', 'proxy-basic', 'no-proxy-basic', 'retry-connrefused',
-		'no-retry-connrefused', 'proxy-negotiate', 'no-proxy-negotiate', 'proxy-anyauth',
-		'no-proxy-anyauth', 'trace-time', 'no-trace-time', 'ignore-content-length',
-		'no-ignore-content-length', 'ftp-skip-pasv-ip', 'no-ftp-skip-pasv-ip', 'ftp-ssl-reqd',
-		'no-ftp-ssl-reqd', 'ssl-reqd', 'no-ssl-reqd', 'sessionid', 'no-sessionid', 'ftp-ssl-control',
-		'no-ftp-ssl-control', 'ftp-ssl-ccc', 'no-ftp-ssl-ccc', 'raw', 'no-raw', 'post301',
-		'no-post301', 'keepalive', 'no-keepalive', 'post302', 'no-post302', 'socks5-gssapi-nec',
-		'no-socks5-gssapi-nec', 'ftp-pret', 'no-ftp-pret', 'post303', 'no-post303', 'metalink',
-		'no-metalink', 'sasl-ir', 'no-sasl-ir', 'test-event', 'no-test-event', 'path-as-is',
-		'no-path-as-is', 'tftp-no-options', 'no-tftp-no-options', 'suppress-connect-headers',
-		'no-suppress-connect-headers', 'compressed-ssh', 'no-compressed-ssh', 'retry-all-errors',
-		'no-retry-all-errors', '0', 'http1.0', 'http1.1', 'http2', 'http2-prior-knowledge',
-		'http3', 'http0.9', 'no-http0.9', '1', 'tlsv1', 'tlsv1.0', 'tlsv1.1', 'tlsv1.2', 'tlsv1.3',
-		'2', 'sslv2', '3', 'sslv3', '4', 'ipv4', '6', 'ipv6', 'a', 'append', 'no-append', 'B',
-		'use-ascii', 'no-use-ascii', 'ssl-allow-beast', 'no-ssl-allow-beast', 'ssl-auto-client-cert',
-		'no-ssl-auto-client-cert', 'proxy-ssl-auto-client-cert', 'no-proxy-ssl-auto-client-cert',
-		'cert-status', 'no-cert-status', 'doh-cert-status', 'no-doh-cert-status', 'false-start',
-		'no-false-start', 'ssl-no-revoke', 'no-ssl-no-revoke', 'ssl-revoke-best-effort',
-		'no-ssl-revoke-best-effort', 'tcp-fastopen', 'no-tcp-fastopen', 'proxy-ssl-allow-beast',
-		'no-proxy-ssl-allow-beast', 'proxy-insecure', 'no-proxy-insecure', 'proxy-tlsv1',
-		'socks5-basic', 'no-socks5-basic', 'socks5-gssapi', 'no-socks5-gssapi', 'f', 'fail',
-		'no-fail', 'fail-early', 'no-fail-early', 'styled-output', 'no-styled-output',
-		'mail-rcpt-allowfails', 'no-mail-rcpt-allowfails', 'fail-with-body', 'no-fail-with-body',
-		'g', 'globoff', 'no-globoff', 'G', 'get', 'h', 'help', 'no-help', 'i', 'include',
-		'no-include', 'I', 'head', 'no-head', 'j', 'junk-session-cookies', 'no-junk-session-cookies',
-		'J', 'remote-header-name', 'no-remote-header-name', 'k', 'insecure', 'no-insecure',
-		'doh-insecure', 'no-doh-insecure', 'l', 'list-only', 'no-list-only', 'L', 'location',
-		'no-location', 'location-trusted', 'no-location-trusted', 'M', 'manual', 'no-manual',
-		'n', 'netrc', 'no-netrc', 'netrc-optional', 'no-netrc-optional', 'N', 'buffer', 'no-buffer',
-		'O', 'remote-name', 'remote-name-all', 'no-remote-name-all', 'p', 'proxytunnel',
-		'no-proxytunnel', 'q', 'disable', 'no-disable', 'R', 'remote-time', 'no-remote-time',
-		's', 'silent', 'no-silent', 'S', 'show-error', 'no-show-error', 'v', 'verbose', 'no-verbose',
-		'V', 'version', 'no-version', 'Z', 'parallel', 'no-parallel', 'parallel-immediate',
-		'no-parallel-immediate', '#', 'progress-bar', 'no-progress-bar',
-		'progress-meter', 'no-progress-meter', ':', 'next',
+		'disable-epsv', 'no-disable-epsv', 'disallow-username-in-url', 'no-disallow-username-in-url',
+		'epsv', 'no-epsv', 'npn', 'no-npn', 'alpn', 'no-alpn', 'compressed', 'no-compressed',
+		'tr-encoding', 'no-tr-encoding', 'digest', 'no-digest', 'negotiate', 'no-negotiate',
+		'ntlm', 'no-ntlm', 'ntlm-wb', 'no-ntlm-wb', 'basic', 'no-basic', 'anyauth', 'no-anyauth',
+		'wdebug', 'no-wdebug', 'ftp-create-dirs', 'no-ftp-create-dirs',
+		'create-dirs', 'no-create-dirs', 'proxy-ntlm', 'no-proxy-ntlm', 'crlf', 'no-crlf',
+		'haproxy-protocol', 'no-haproxy-protocol', 'disable-eprt', 'no-disable-eprt',
+		'eprt', 'no-eprt', 'xattr', 'no-xattr', 'ftp-ssl', 'no-ftp-ssl', 'ssl', 'no-ssl',
+		'ftp-pasv', 'no-ftp-pasv', 'tcp-nodelay', 'no-tcp-nodelay', 'proxy-digest', 'no-proxy-digest',
+		'proxy-basic', 'no-proxy-basic', 'retry-connrefused', 'no-retry-connrefused',
+		'proxy-negotiate', 'no-proxy-negotiate', 'proxy-anyauth', 'no-proxy-anyauth',
+		'trace-time', 'no-trace-time', 'ignore-content-length', 'no-ignore-content-length',
+		'ftp-skip-pasv-ip', 'no-ftp-skip-pasv-ip', 'ftp-ssl-reqd', 'no-ftp-ssl-reqd',
+		'ssl-reqd', 'no-ssl-reqd', 'sessionid', 'no-sessionid', 'ftp-ssl-control', 'no-ftp-ssl-control',
+		'ftp-ssl-ccc', 'no-ftp-ssl-ccc', 'raw', 'no-raw', 'post301', 'no-post301',
+		'keepalive', 'no-keepalive', 'post302', 'no-post302',
+		'socks5-gssapi-nec', 'no-socks5-gssapi-nec', 'ftp-pret', 'no-ftp-pret', 'post303', 'no-post303',
+		'metalink', 'no-metalink', 'sasl-ir', 'no-sasl-ir', 'test-event', 'no-test-event',
+		'path-as-is', 'no-path-as-is', 'tftp-no-options', 'no-tftp-no-options',
+		'suppress-connect-headers', 'no-suppress-connect-headers', 'compressed-ssh', 'no-compressed-ssh',
+		'retry-all-errors', 'no-retry-all-errors',
+		'http1.0', 'http1.1', 'http2', 'http2-prior-knowledge', 'http3', 'http0.9', 'no-http0.9',
+		'tlsv1', 'tlsv1.0', 'tlsv1.1', 'tlsv1.2', 'tlsv1.3', 'sslv2', 'sslv3',
+		'ipv4', 'ipv6',
+		'append', 'no-append', 'use-ascii', 'no-use-ascii', 'ssl-allow-beast', 'no-ssl-allow-beast',
+		'ssl-auto-client-cert', 'no-ssl-auto-client-cert',
+		'proxy-ssl-auto-client-cert', 'no-proxy-ssl-auto-client-cert', 'cert-status', 'no-cert-status',
+		'doh-cert-status', 'no-doh-cert-status', 'false-start', 'no-false-start',
+		'ssl-no-revoke', 'no-ssl-no-revoke', 'ssl-revoke-best-effort', 'no-ssl-revoke-best-effort',
+		'tcp-fastopen', 'no-tcp-fastopen', 'proxy-ssl-allow-beast', 'no-proxy-ssl-allow-beast',
+		'proxy-insecure', 'no-proxy-insecure', 'proxy-tlsv1', 'socks5-basic', 'no-socks5-basic',
+		'socks5-gssapi', 'no-socks5-gssapi', 'fail', 'no-fail', 'fail-early', 'no-fail-early',
+		'styled-output', 'no-styled-output', 'mail-rcpt-allowfails', 'no-mail-rcpt-allowfails',
+		'fail-with-body', 'no-fail-with-body', 'globoff', 'no-globoff', 'get', 'help', 'no-help',
+		'include', 'no-include', 'head', 'no-head', 'junk-session-cookies', 'no-junk-session-cookies',
+		'remote-header-name', 'no-remote-header-name', 'insecure', 'no-insecure',
+		'doh-insecure', 'no-doh-insecure', 'list-only', 'no-list-only', 'location', 'no-location',
+		'location-trusted', 'no-location-trusted', 'manual', 'no-manual', 'netrc', 'no-netrc',
+		'netrc-optional', 'no-netrc-optional', 'buffer', 'no-buffer', 'remote-name',
+		'remote-name-all', 'no-remote-name-all', 'proxytunnel', 'no-proxytunnel', 'disable', 'no-disable',
+		'remote-time', 'no-remote-time', 'silent', 'no-silent', 'show-error', 'no-show-error',
+		'verbose', 'no-verbose', 'version', 'no-version', 'parallel', 'no-parallel',
+		'parallel-immediate', 'no-parallel-immediate', 'progress-bar', 'no-progress-bar',
+		'progress-meter', 'no-progress-meter', 'next',
 		// renamed to --http3 in https://github.com/curl/curl/commit/026840e3
 		'http3-direct',
 		// replaced by --request-target in https://github.com/curl/curl/commit/9b167fd0
@@ -101,9 +102,73 @@ function curlToGo(curl) {
 		// 't', 'upload',
 	]);
 
+	// all of curl's short options have a long form
+	var optionAliases = {
+		'0': 'http1.0',
+		'1': 'tlsv1',
+		'2': 'sslv2',
+		'3': 'sslv3',
+		'4': 'ipv4',
+		'6': 'ipv6',
+		'a': 'append',
+		'A': 'user-agent',
+		'b': 'cookie',
+		'B': 'use-ascii',
+		'c': 'cookie-jar',
+		'C': 'continue-at',
+		'd': 'data',
+		'D': 'dump-header',
+		'e': 'referer',
+		'E': 'cert',
+		'f': 'fail',
+		'F': 'form',
+		'g': 'globoff',
+		'G': 'get',
+		'h': 'help',
+		'H': 'header',
+		'i': 'include',
+		'I': 'head',
+		'j': 'junk-session-cookies',
+		'J': 'remote-header-name',
+		'k': 'insecure',
+		'K': 'config',
+		'l': 'list-only',
+		'L': 'location',
+		'm': 'max-time',
+		'M': 'manual',
+		'n': 'netrc',
+		// N is an alias for --no-buffer, not --buffer
+		'N': 'no-buffer',
+		'o': 'output',
+		'O': 'remote-name',
+		'p': 'proxytunnel',
+		'P': 'ftp-port',
+		'q': 'disable',
+		'Q': 'quote',
+		'r': 'range',
+		'R': 'remote-time',
+		's': 'silent',
+		'S': 'show-error',
+		't': 'telnet-option',
+		'T': 'upload-file',
+		'u': 'user',
+		'U': 'proxy-user',
+		'v': 'verbose',
+		'V': 'version',
+		'w': 'write-out',
+		'x': 'proxy',
+		'X': 'request',
+		'Y': 'speed-limit',
+		'y': 'speed-time',
+		'z': 'time-cond',
+		'Z': 'parallel',
+		'#': 'progress-bar',
+		':': 'next',
+	};
+
 	if (!curl.trim())
 		return;
-	var cmd = parseCommand(curl, { boolFlags: boolOptions });
+	var cmd = parseCommand(curl, { boolFlags: boolOptions, aliases: optionAliases });
 
 	if (cmd._[0] != "curl")
 		throw "Not a curl command";
@@ -263,21 +328,16 @@ function curlToGo(curl) {
 			relevant.url = cmd._[1]; // position 1 because index 0 is the curl command itself
 
 		// gather the headers together
-		if (cmd.H)
-			relevant.headers = relevant.headers.concat(cmd.H);
 		if (cmd.header)
 			relevant.headers = relevant.headers.concat(cmd.header);
 		relevant.headers = parseHeaders(relevant.headers)
 
 		// set method to HEAD?
-		if (cmd.I || cmd.head)
+		if (cmd.head)
 			relevant.method = "HEAD";
 
-		// between -X and --request, prefer the long form I guess
 		if (cmd.request && cmd.request.length > 0)
-			relevant.method = cmd.request[cmd.request.length-1].toUpperCase();
-		else if (cmd.X && cmd.X.length > 0)
-			relevant.method = cmd.X[cmd.X.length-1].toUpperCase(); // if multiple, use last (according to curl docs)
+			relevant.method = cmd.request[cmd.request.length-1].toUpperCase(); // if multiple, use last (according to curl docs)
 		else if (
 			(cmd["data-binary"] && cmd["data-binary"].length > 0)
 			|| (cmd["data-raw"] && cmd["data-raw"].length > 0)
@@ -310,8 +370,6 @@ function curlToGo(curl) {
 				}
 			}
 		};
-		if (cmd.d)
-			loadData(cmd.d);
 		if (cmd.data)
 			loadData(cmd.data);
 		if (cmd["data-binary"])
@@ -323,12 +381,9 @@ function curlToGo(curl) {
 		if (dataFiles.length > 0)
 			relevant.data.files = dataFiles;
 
-		// between -u and --user, choose the long form...
 		var basicAuthString = "";
 		if (cmd.user && cmd.user.length > 0)
 			basicAuthString = cmd.user[cmd.user.length-1];
-		else if (cmd.u && cmd.u.length > 0)
-			basicAuthString = cmd.u[cmd.u.length-1];
 		// if the -u or --user flags haven't been set then don't set the
 		// basicauth property.
 		if (basicAuthString) {
@@ -348,7 +403,7 @@ function curlToGo(curl) {
 		if (!relevant.method)
 			relevant.method = "GET";
 
-		if (cmd.k || cmd.insecure) {
+		if (cmd.insecure) {
 			relevant.insecure = true;
 		}
 
@@ -445,13 +500,13 @@ function parseCommand(input, options) {
 		cursor++; // skip leading dash
 		while (cursor < input.length && !whitespace(input[cursor]))
 		{
-			var flagName = input[cursor];
+			var flagName = fullName(input[cursor]);
 			if (typeof result[flagName] == 'undefined') {
 				result[flagName] = [];
 			}
 			cursor++; // skip the flag name
 			if (boolFlag(flagName))
-				result[flagName] = true;
+				result[flagName] = toBool(flagName);
 			else if (Array.isArray(result[flagName]))
 				result[flagName].push(nextString());
 		}
@@ -463,7 +518,7 @@ function parseCommand(input, options) {
 		cursor += 2; // skip leading dashes
 		var flagName = nextString("=");
 		if (boolFlag(flagName))
-			result[flagName] = true;
+			result[flagName] = toBool(flagName);
 		else {
 			if (typeof result[flagName] == 'undefined') {
 				result[flagName] = [];
@@ -480,6 +535,12 @@ function parseCommand(input, options) {
 		result._.push(nextString());
 	}
 
+	// fullName returns the long name of a short flag
+	function fullName(flag) {
+		var alias = options.aliases[flag]
+		return alias ? alias : flag;
+	}
+
 	// boolFlag returns whether a flag is known to be boolean type
 	function boolFlag(flag) {
 		if (options.boolFlags instanceof Set) {
@@ -492,6 +553,13 @@ function parseCommand(input, options) {
 			}
 		}
 		return false;
+	}
+
+	// toBool converts a long flag name to a boolean value.
+	// --verbose -> true
+	// --no-verbose -> false
+	function toBool(flag) {
+		return !(flag.startsWith('no-') || flag.startsWith('disable-'));
 	}
 
 	// nextString skips any leading whitespace and consumes the next
