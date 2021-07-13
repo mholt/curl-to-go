@@ -17,7 +17,8 @@ function curlToGo(curl) {
 	// List of curl flags that are boolean typed; this helps with parsing
 	// a command like `curl -abc value` to know whether 'value' belongs to '-c'
 	// or is just a positional argument instead.
-	var boolOptions = ['disable-epsv', 'no-disable-epsv', 'disallow-username-in-url',
+	var boolOptions = [
+		'disable-epsv', 'no-disable-epsv', 'disallow-username-in-url',
 		'no-disallow-username-in-url', 'epsv', 'no-epsv', 'npn', 'no-npn', 'alpn', 'no-alpn',
 		'compressed', 'no-compressed', 'tr-encoding', 'no-tr-encoding', 'digest', 'no-digest',
 		'negotiate', 'no-negotiate', 'ntlm', 'no-ntlm', 'ntlm-wb', 'no-ntlm-wb', 'basic',
@@ -60,7 +61,45 @@ function curlToGo(curl) {
 		's', 'silent', 'no-silent', 'S', 'show-error', 'no-show-error', 'v', 'verbose', 'no-verbose',
 		'V', 'version', 'no-version', 'Z', 'parallel', 'no-parallel', 'parallel-immediate',
 		'no-parallel-immediate', '#', 'progress-bar', 'no-progress-bar',
-		'progress-meter', 'no-progress-meter', ':', 'next'];
+		'progress-meter', 'no-progress-meter', ':', 'next',
+		// renamed to --http3 in https://github.com/curl/curl/commit/026840e3
+		'http3-direct',
+		// replaced by --request-target in https://github.com/curl/curl/commit/9b167fd0
+		'strip-path-slash', 'no-strip-path-slash',
+		// removed in https://github.com/curl/curl/commit/a8e388dd
+		'environment', 'no-environment',
+		// curl technically accepted these non-sensical options, they were removed in
+		// https://github.com/curl/curl/commit/913c3c8f
+		'no-http1.0', 'no-http1.1', 'no-http2', 'no-http2-prior-knowledge',
+		'no-tlsv1', 'no-tlsv1.0', 'no-tlsv1.1', 'no-tlsv1.2', 'no-tlsv1.3', 'no-sslv2', 'no-sslv3',
+		'no-ipv4', 'no-ipv6', 'no-proxy-tlsv1', 'no-get', 'no-remote-name', 'no-next',
+		// removed in https://github.com/curl/curl/commit/720ea577
+		'proxy-sslv2', 'no-proxy-sslv2', 'proxy-sslv3', 'no-proxy-sslv3',
+		// removed in https://github.com/curl/curl/commit/388c6b5e
+		// I don't think this was ever a real short option
+		// '~',
+		// renamed to --http2 in https://github.com/curl/curl/commit/0952c9ab
+		'http2.0', 'no-http2.0',
+		// removed in https://github.com/curl/curl/commit/ebf31389
+		// I don't think this option was ever released, it was renamed the same day
+		// it was introduced
+		// 'ssl-no-empty-fragments', 'no-ssl-no-empty-fragments',
+		// renamed to --ntlm-wb in https://github.com/curl/curl/commit/b4f6319c
+		'ntlm-sso', 'no-ntlm-sso',
+		// all options got "--no-" versions in https://github.com/curl/curl/commit/5abfdc01
+		// renamed to --no-keepalive in https://github.com/curl/curl/commit/f866af91
+		'no-keep-alive',
+		// may've been short for --crlf until https://github.com/curl/curl/commit/16643faa
+		// '9',
+		// removed in https://github.com/curl/curl/commit/07660eea
+		// -@ used to be short for --create-dirs
+		'ftp-ascii', // '@',
+		// removed in https://github.com/curl/curl/commit/c13dbf7b
+		// 'c', 'continue',
+		// removed in https://github.com/curl/curl/commit/a1d6ad26
+		// -t used to be short for --upload
+		// 't', 'upload',
+	];
 
 	if (!curl.trim())
 		return;
