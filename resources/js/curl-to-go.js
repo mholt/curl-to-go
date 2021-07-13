@@ -17,7 +17,7 @@ function curlToGo(curl) {
 	// List of curl flags that are boolean typed; this helps with parsing
 	// a command like `curl -abc value` to know whether 'value' belongs to '-c'
 	// or is just a positional argument instead.
-	var boolOptions = [
+	var boolOptions = new Set([
 		'disable-epsv', 'no-disable-epsv', 'disallow-username-in-url',
 		'no-disallow-username-in-url', 'epsv', 'no-epsv', 'npn', 'no-npn', 'alpn', 'no-alpn',
 		'compressed', 'no-compressed', 'tr-encoding', 'no-tr-encoding', 'digest', 'no-digest',
@@ -99,7 +99,7 @@ function curlToGo(curl) {
 		// removed in https://github.com/curl/curl/commit/a1d6ad26
 		// -t used to be short for --upload
 		// 't', 'upload',
-	];
+	]);
 
 	if (!curl.trim())
 		return;
@@ -482,6 +482,9 @@ function parseCommand(input, options) {
 
 	// boolFlag returns whether a flag is known to be boolean type
 	function boolFlag(flag) {
+		if (options.boolFlags instanceof Set) {
+			return options.boolFlags.has(flag);
+		}
 		if (Array.isArray(options.boolFlags)) {
 			for (var i = 0; i < options.boolFlags.length; i++) {
 				if (options.boolFlags[i] == flag)
