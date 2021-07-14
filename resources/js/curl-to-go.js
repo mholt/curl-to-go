@@ -100,6 +100,8 @@ function curlToGo(curl) {
 		// removed in https://github.com/curl/curl/commit/a1d6ad26
 		// -t used to be short for --upload
 		// 't', 'upload',
+        // https://github.com/mholt/curl-to-go/pull/47#issuecomment-879485938
+		'-',
 	]);
 
 	// all of curl's short options have a long form
