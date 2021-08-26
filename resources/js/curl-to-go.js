@@ -14,98 +14,363 @@ function curlToGo(curl) {
 	var originalCmd = curl.split(/\r\n?|\n/).map((line) => `// ${line}`).join('\n');
 	var header = `${promo}\n\n${originalCmd}\n\n`;
 
-	// List of curl flags that are boolean typed; this helps with parsing
-	// a command like `curl -abc value` to know whether 'value' belongs to '-c'
-	// or is just a positional argument instead.
-	// https://github.com/curl/curl/blob/f410b9e538129e77607fef1894f96c684a7c8c3b/src/tool_getparam.c#L73-L341
-	var boolOptions = new Set([
-		'disable-epsv', 'no-disable-epsv', 'disallow-username-in-url', 'no-disallow-username-in-url',
-		'epsv', 'no-epsv', 'npn', 'no-npn', 'alpn', 'no-alpn', 'compressed', 'no-compressed',
-		'tr-encoding', 'no-tr-encoding', 'digest', 'no-digest', 'negotiate', 'no-negotiate',
-		'ntlm', 'no-ntlm', 'ntlm-wb', 'no-ntlm-wb', 'basic', 'no-basic', 'anyauth', 'no-anyauth',
-		'wdebug', 'no-wdebug', 'ftp-create-dirs', 'no-ftp-create-dirs',
-		'create-dirs', 'no-create-dirs', 'proxy-ntlm', 'no-proxy-ntlm', 'crlf', 'no-crlf',
-		'haproxy-protocol', 'no-haproxy-protocol', 'disable-eprt', 'no-disable-eprt',
-		'eprt', 'no-eprt', 'xattr', 'no-xattr', 'ftp-ssl', 'no-ftp-ssl', 'ssl', 'no-ssl',
-		'ftp-pasv', 'no-ftp-pasv', 'tcp-nodelay', 'no-tcp-nodelay', 'proxy-digest', 'no-proxy-digest',
-		'proxy-basic', 'no-proxy-basic', 'retry-connrefused', 'no-retry-connrefused',
-		'proxy-negotiate', 'no-proxy-negotiate', 'proxy-anyauth', 'no-proxy-anyauth',
-		'trace-time', 'no-trace-time', 'ignore-content-length', 'no-ignore-content-length',
-		'ftp-skip-pasv-ip', 'no-ftp-skip-pasv-ip', 'ftp-ssl-reqd', 'no-ftp-ssl-reqd',
-		'ssl-reqd', 'no-ssl-reqd', 'sessionid', 'no-sessionid', 'ftp-ssl-control', 'no-ftp-ssl-control',
-		'ftp-ssl-ccc', 'no-ftp-ssl-ccc', 'raw', 'no-raw', 'post301', 'no-post301',
-		'keepalive', 'no-keepalive', 'post302', 'no-post302',
-		'socks5-gssapi-nec', 'no-socks5-gssapi-nec', 'ftp-pret', 'no-ftp-pret', 'post303', 'no-post303',
-		'metalink', 'no-metalink', 'sasl-ir', 'no-sasl-ir', 'test-event', 'no-test-event',
-		'path-as-is', 'no-path-as-is', 'tftp-no-options', 'no-tftp-no-options',
-		'suppress-connect-headers', 'no-suppress-connect-headers', 'compressed-ssh', 'no-compressed-ssh',
-		'retry-all-errors', 'no-retry-all-errors',
-		'http1.0', 'http1.1', 'http2', 'http2-prior-knowledge', 'http3', 'http0.9', 'no-http0.9',
-		'tlsv1', 'tlsv1.0', 'tlsv1.1', 'tlsv1.2', 'tlsv1.3', 'sslv2', 'sslv3',
-		'ipv4', 'ipv6',
-		'append', 'no-append', 'use-ascii', 'no-use-ascii', 'ssl-allow-beast', 'no-ssl-allow-beast',
-		'ssl-auto-client-cert', 'no-ssl-auto-client-cert',
-		'proxy-ssl-auto-client-cert', 'no-proxy-ssl-auto-client-cert', 'cert-status', 'no-cert-status',
-		'doh-cert-status', 'no-doh-cert-status', 'false-start', 'no-false-start',
-		'ssl-no-revoke', 'no-ssl-no-revoke', 'ssl-revoke-best-effort', 'no-ssl-revoke-best-effort',
-		'tcp-fastopen', 'no-tcp-fastopen', 'proxy-ssl-allow-beast', 'no-proxy-ssl-allow-beast',
-		'proxy-insecure', 'no-proxy-insecure', 'proxy-tlsv1', 'socks5-basic', 'no-socks5-basic',
-		'socks5-gssapi', 'no-socks5-gssapi', 'fail', 'no-fail', 'fail-early', 'no-fail-early',
-		'styled-output', 'no-styled-output', 'mail-rcpt-allowfails', 'no-mail-rcpt-allowfails',
-		'fail-with-body', 'no-fail-with-body', 'globoff', 'no-globoff', 'get', 'help', 'no-help',
-		'include', 'no-include', 'head', 'no-head', 'junk-session-cookies', 'no-junk-session-cookies',
-		'remote-header-name', 'no-remote-header-name', 'insecure', 'no-insecure',
-		'doh-insecure', 'no-doh-insecure', 'list-only', 'no-list-only', 'location', 'no-location',
-		'location-trusted', 'no-location-trusted', 'manual', 'no-manual', 'netrc', 'no-netrc',
-		'netrc-optional', 'no-netrc-optional', 'buffer', 'no-buffer', 'remote-name',
-		'remote-name-all', 'no-remote-name-all', 'proxytunnel', 'no-proxytunnel', 'disable', 'no-disable',
-		'remote-time', 'no-remote-time', 'silent', 'no-silent', 'show-error', 'no-show-error',
-		'verbose', 'no-verbose', 'version', 'no-version', 'parallel', 'no-parallel',
-		'parallel-immediate', 'no-parallel-immediate', 'progress-bar', 'no-progress-bar',
-		'progress-meter', 'no-progress-meter', 'next',
-		// renamed to --http3 in https://github.com/curl/curl/commit/026840e3
-		'http3-direct',
-		// replaced by --request-target in https://github.com/curl/curl/commit/9b167fd0
-		'strip-path-slash', 'no-strip-path-slash',
-		// removed in https://github.com/curl/curl/commit/a8e388dd
-		'environment', 'no-environment',
-		// curl technically accepted these non-sensical options, they were removed in
-		// https://github.com/curl/curl/commit/913c3c8f
-		'no-http1.0', 'no-http1.1', 'no-http2', 'no-http2-prior-knowledge',
-		'no-tlsv1', 'no-tlsv1.0', 'no-tlsv1.1', 'no-tlsv1.2', 'no-tlsv1.3', 'no-sslv2', 'no-sslv3',
-		'no-ipv4', 'no-ipv6', 'no-proxy-tlsv1', 'no-get', 'no-remote-name', 'no-next',
-		// removed in https://github.com/curl/curl/commit/720ea577
-		'proxy-sslv2', 'no-proxy-sslv2', 'proxy-sslv3', 'no-proxy-sslv3',
-		// removed in https://github.com/curl/curl/commit/388c6b5e
-		// I don't think this was ever a real short option
-		// '~',
-		// renamed to --http2 in https://github.com/curl/curl/commit/0952c9ab
-		'http2.0', 'no-http2.0',
-		// removed in https://github.com/curl/curl/commit/ebf31389
-		// I don't think this option was ever released, it was renamed the same day
-		// it was introduced
-		// 'ssl-no-empty-fragments', 'no-ssl-no-empty-fragments',
-		// renamed to --ntlm-wb in https://github.com/curl/curl/commit/b4f6319c
-		'ntlm-sso', 'no-ntlm-sso',
-		// all options got "--no-" versions in https://github.com/curl/curl/commit/5abfdc01
-		// renamed to --no-keepalive in https://github.com/curl/curl/commit/f866af91
-		'no-keep-alive',
-		// may've been short for --crlf until https://github.com/curl/curl/commit/16643faa
-		// '9',
-		// removed in https://github.com/curl/curl/commit/07660eea
-		// -@ used to be short for --create-dirs
-		'ftp-ascii', // '@',
-		// removed in https://github.com/curl/curl/commit/c13dbf7b
-		// 'c', 'continue',
-		// removed in https://github.com/curl/curl/commit/a1d6ad26
-		// -t used to be short for --upload
-		// 't', 'upload',
-        // https://github.com/mholt/curl-to-go/pull/47#issuecomment-879485938
-		'-',
-	]);
+	// Options are extracted from curl's source code by extract_curl_args.py
+	// BEGIN GENERATED CURL OPTIONS
+	var longOptions = {
+		'url': {type: 'string'},
+		'dns-ipv4-addr': {type: 'string'},
+		'dns-ipv6-addr': {type: 'string'},
+		'random-file': {type: 'string'},
+		'egd-file': {type: 'string'},
+		'oauth2-bearer': {type: 'string'},
+		'connect-timeout': {type: 'string'},
+		'doh-url': {type: 'string'},
+		'ciphers': {type: 'string'},
+		'dns-interface': {type: 'string'},
+		'disable-epsv': {type: 'bool', name: 'epsv'},
+		'no-disable-epsv': {type: 'bool', name: 'epsv', expand: false},
+		'disallow-username-in-url': {type: 'bool'},
+		'no-disallow-username-in-url': {type: 'bool', name: 'disallow-username-in-url', expand: false},
+		'epsv': {type: 'bool'},
+		'no-epsv': {type: 'bool', name: 'epsv', expand: false},
+		'dns-servers': {type: 'string'},
+		'trace': {type: 'string'},
+		'npn': {type: 'bool'},
+		'no-npn': {type: 'bool', name: 'npn', expand: false},
+		'trace-ascii': {type: 'string'},
+		'alpn': {type: 'bool'},
+		'no-alpn': {type: 'bool', name: 'alpn', expand: false},
+		'limit-rate': {type: 'string'},
+		'compressed': {type: 'bool'},
+		'no-compressed': {type: 'bool', name: 'compressed', expand: false},
+		'tr-encoding': {type: 'bool'},
+		'no-tr-encoding': {type: 'bool', name: 'tr-encoding', expand: false},
+		'digest': {type: 'bool'},
+		'no-digest': {type: 'bool', name: 'digest', expand: false},
+		'negotiate': {type: 'bool'},
+		'no-negotiate': {type: 'bool', name: 'negotiate', expand: false},
+		'ntlm': {type: 'bool'},
+		'no-ntlm': {type: 'bool', name: 'ntlm', expand: false},
+		'ntlm-wb': {type: 'bool'},
+		'no-ntlm-wb': {type: 'bool', name: 'ntlm-wb', expand: false},
+		'basic': {type: 'bool'},
+		'no-basic': {type: 'bool', name: 'basic', expand: false},
+		'anyauth': {type: 'bool'},
+		'no-anyauth': {type: 'bool', name: 'anyauth', expand: false},
+		'wdebug': {type: 'bool'},
+		'no-wdebug': {type: 'bool', name: 'wdebug', expand: false},
+		'ftp-create-dirs': {type: 'bool'},
+		'no-ftp-create-dirs': {type: 'bool', name: 'ftp-create-dirs', expand: false},
+		'create-dirs': {type: 'bool'},
+		'no-create-dirs': {type: 'bool', name: 'create-dirs', expand: false},
+		'create-file-mode': {type: 'string'},
+		'max-redirs': {type: 'string'},
+		'proxy-ntlm': {type: 'bool'},
+		'no-proxy-ntlm': {type: 'bool', name: 'proxy-ntlm', expand: false},
+		'crlf': {type: 'bool'},
+		'no-crlf': {type: 'bool', name: 'crlf', expand: false},
+		'stderr': {type: 'string'},
+		'aws-sigv4': {type: 'string'},
+		'interface': {type: 'string'},
+		'krb': {type: 'string'},
+		'krb4': {type: 'string', name: 'krb'},
+		'haproxy-protocol': {type: 'bool'},
+		'no-haproxy-protocol': {type: 'bool', name: 'haproxy-protocol', expand: false},
+		'max-filesize': {type: 'string'},
+		'disable-eprt': {type: 'bool', name: 'eprt'},
+		'no-disable-eprt': {type: 'bool', name: 'eprt', expand: false},
+		'eprt': {type: 'bool'},
+		'no-eprt': {type: 'bool', name: 'eprt', expand: false},
+		'xattr': {type: 'bool'},
+		'no-xattr': {type: 'bool', name: 'xattr', expand: false},
+		'ftp-ssl': {type: 'bool', name: 'ssl'},
+		'no-ftp-ssl': {type: 'bool', name: 'ssl', expand: false},
+		'ssl': {type: 'bool'},
+		'no-ssl': {type: 'bool', name: 'ssl', expand: false},
+		'ftp-pasv': {type: 'bool'},
+		'no-ftp-pasv': {type: 'bool', name: 'ftp-pasv', expand: false},
+		'socks5': {type: 'string'},
+		'tcp-nodelay': {type: 'bool'},
+		'no-tcp-nodelay': {type: 'bool', name: 'tcp-nodelay', expand: false},
+		'proxy-digest': {type: 'bool'},
+		'no-proxy-digest': {type: 'bool', name: 'proxy-digest', expand: false},
+		'proxy-basic': {type: 'bool'},
+		'no-proxy-basic': {type: 'bool', name: 'proxy-basic', expand: false},
+		'retry': {type: 'string'},
+		'retry-connrefused': {type: 'bool'},
+		'no-retry-connrefused': {type: 'bool', name: 'retry-connrefused', expand: false},
+		'retry-delay': {type: 'string'},
+		'retry-max-time': {type: 'string'},
+		'proxy-negotiate': {type: 'bool'},
+		'no-proxy-negotiate': {type: 'bool', name: 'proxy-negotiate', expand: false},
+		'ftp-account': {type: 'string'},
+		'proxy-anyauth': {type: 'bool'},
+		'no-proxy-anyauth': {type: 'bool', name: 'proxy-anyauth', expand: false},
+		'trace-time': {type: 'bool'},
+		'no-trace-time': {type: 'bool', name: 'trace-time', expand: false},
+		'ignore-content-length': {type: 'bool'},
+		'no-ignore-content-length': {type: 'bool', name: 'ignore-content-length', expand: false},
+		'ftp-skip-pasv-ip': {type: 'bool'},
+		'no-ftp-skip-pasv-ip': {type: 'bool', name: 'ftp-skip-pasv-ip', expand: false},
+		'ftp-method': {type: 'string'},
+		'local-port': {type: 'string'},
+		'socks4': {type: 'string'},
+		'socks4a': {type: 'string'},
+		'ftp-alternative-to-user': {type: 'string'},
+		'ftp-ssl-reqd': {type: 'bool', name: 'ssl-reqd'},
+		'no-ftp-ssl-reqd': {type: 'bool', name: 'ssl-reqd', expand: false},
+		'ssl-reqd': {type: 'bool'},
+		'no-ssl-reqd': {type: 'bool', name: 'ssl-reqd', expand: false},
+		'sessionid': {type: 'bool'},
+		'no-sessionid': {type: 'bool', name: 'sessionid', expand: false},
+		'ftp-ssl-control': {type: 'bool'},
+		'no-ftp-ssl-control': {type: 'bool', name: 'ftp-ssl-control', expand: false},
+		'ftp-ssl-ccc': {type: 'bool'},
+		'no-ftp-ssl-ccc': {type: 'bool', name: 'ftp-ssl-ccc', expand: false},
+		'ftp-ssl-ccc-mode': {type: 'string'},
+		'libcurl': {type: 'string'},
+		'raw': {type: 'bool'},
+		'no-raw': {type: 'bool', name: 'raw', expand: false},
+		'post301': {type: 'bool'},
+		'no-post301': {type: 'bool', name: 'post301', expand: false},
+		'keepalive': {type: 'bool'},
+		'no-keepalive': {type: 'bool', name: 'keepalive', expand: false},
+		'socks5-hostname': {type: 'string'},
+		'keepalive-time': {type: 'string'},
+		'post302': {type: 'bool'},
+		'no-post302': {type: 'bool', name: 'post302', expand: false},
+		'noproxy': {type: 'string'},
+		'socks5-gssapi-nec': {type: 'bool'},
+		'no-socks5-gssapi-nec': {type: 'bool', name: 'socks5-gssapi-nec', expand: false},
+		'proxy1.0': {type: 'string'},
+		'tftp-blksize': {type: 'string'},
+		'mail-from': {type: 'string'},
+		'mail-rcpt': {type: 'string'},
+		'ftp-pret': {type: 'bool'},
+		'no-ftp-pret': {type: 'bool', name: 'ftp-pret', expand: false},
+		'proto': {type: 'string'},
+		'proto-redir': {type: 'string'},
+		'resolve': {type: 'string'},
+		'delegation': {type: 'string'},
+		'mail-auth': {type: 'string'},
+		'post303': {type: 'bool'},
+		'no-post303': {type: 'bool', name: 'post303', expand: false},
+		'metalink': {type: 'bool'},
+		'no-metalink': {type: 'bool', name: 'metalink', expand: false},
+		'sasl-authzid': {type: 'string'},
+		'sasl-ir': {type: 'bool'},
+		'no-sasl-ir': {type: 'bool', name: 'sasl-ir', expand: false},
+		'test-event': {type: 'bool'},
+		'no-test-event': {type: 'bool', name: 'test-event', expand: false},
+		'unix-socket': {type: 'string'},
+		'path-as-is': {type: 'bool'},
+		'no-path-as-is': {type: 'bool', name: 'path-as-is', expand: false},
+		'socks5-gssapi-service': {type: 'string', name: 'proxy-service-name'},
+		'proxy-service-name': {type: 'string'},
+		'service-name': {type: 'string'},
+		'proto-default': {type: 'string'},
+		'expect100-timeout': {type: 'string'},
+		'tftp-no-options': {type: 'bool'},
+		'no-tftp-no-options': {type: 'bool', name: 'tftp-no-options', expand: false},
+		'connect-to': {type: 'string'},
+		'abstract-unix-socket': {type: 'string'},
+		'tls-max': {type: 'string'},
+		'suppress-connect-headers': {type: 'bool'},
+		'no-suppress-connect-headers': {type: 'bool', name: 'suppress-connect-headers', expand: false},
+		'compressed-ssh': {type: 'bool'},
+		'no-compressed-ssh': {type: 'bool', name: 'compressed-ssh', expand: false},
+		'happy-eyeballs-timeout-ms': {type: 'string'},
+		'retry-all-errors': {type: 'bool'},
+		'no-retry-all-errors': {type: 'bool', name: 'retry-all-errors', expand: false},
+		'http1.0': {type: 'bool'},
+		'http1.1': {type: 'bool'},
+		'http2': {type: 'bool'},
+		'http2-prior-knowledge': {type: 'bool'},
+		'http3': {type: 'bool'},
+		'http0.9': {type: 'bool'},
+		'no-http0.9': {type: 'bool', name: 'http0.9', expand: false},
+		'tlsv1': {type: 'bool'},
+		'tlsv1.0': {type: 'bool'},
+		'tlsv1.1': {type: 'bool'},
+		'tlsv1.2': {type: 'bool'},
+		'tlsv1.3': {type: 'bool'},
+		'tls13-ciphers': {type: 'string'},
+		'proxy-tls13-ciphers': {type: 'string'},
+		'sslv2': {type: 'bool'},
+		'sslv3': {type: 'bool'},
+		'ipv4': {type: 'bool'},
+		'ipv6': {type: 'bool'},
+		'append': {type: 'bool'},
+		'no-append': {type: 'bool', name: 'append', expand: false},
+		'user-agent': {type: 'string'},
+		'cookie': {type: 'string'},
+		'alt-svc': {type: 'string'},
+		'hsts': {type: 'string'},
+		'use-ascii': {type: 'bool'},
+		'no-use-ascii': {type: 'bool', name: 'use-ascii', expand: false},
+		'cookie-jar': {type: 'string'},
+		'continue-at': {type: 'string'},
+		'data': {type: 'string'},
+		'data-raw': {type: 'string'},
+		'data-ascii': {type: 'string'},
+		'data-binary': {type: 'string'},
+		'data-urlencode': {type: 'string'},
+		'dump-header': {type: 'string'},
+		'referer': {type: 'string'},
+		'cert': {type: 'string'},
+		'cacert': {type: 'string'},
+		'cert-type': {type: 'string'},
+		'key': {type: 'string'},
+		'key-type': {type: 'string'},
+		'pass': {type: 'string'},
+		'engine': {type: 'string'},
+		'capath': {type: 'string'},
+		'pubkey': {type: 'string'},
+		'hostpubmd5': {type: 'string'},
+		'crlfile': {type: 'string'},
+		'tlsuser': {type: 'string'},
+		'tlspassword': {type: 'string'},
+		'tlsauthtype': {type: 'string'},
+		'ssl-allow-beast': {type: 'bool'},
+		'no-ssl-allow-beast': {type: 'bool', name: 'ssl-allow-beast', expand: false},
+		'ssl-auto-client-cert': {type: 'bool'},
+		'no-ssl-auto-client-cert': {type: 'bool', name: 'ssl-auto-client-cert', expand: false},
+		'proxy-ssl-auto-client-cert': {type: 'bool'},
+		'no-proxy-ssl-auto-client-cert': {type: 'bool', name: 'proxy-ssl-auto-client-cert', expand: false},
+		'pinnedpubkey': {type: 'string'},
+		'proxy-pinnedpubkey': {type: 'string'},
+		'cert-status': {type: 'bool'},
+		'no-cert-status': {type: 'bool', name: 'cert-status', expand: false},
+		'doh-cert-status': {type: 'bool'},
+		'no-doh-cert-status': {type: 'bool', name: 'doh-cert-status', expand: false},
+		'false-start': {type: 'bool'},
+		'no-false-start': {type: 'bool', name: 'false-start', expand: false},
+		'ssl-no-revoke': {type: 'bool'},
+		'no-ssl-no-revoke': {type: 'bool', name: 'ssl-no-revoke', expand: false},
+		'ssl-revoke-best-effort': {type: 'bool'},
+		'no-ssl-revoke-best-effort': {type: 'bool', name: 'ssl-revoke-best-effort', expand: false},
+		'tcp-fastopen': {type: 'bool'},
+		'no-tcp-fastopen': {type: 'bool', name: 'tcp-fastopen', expand: false},
+		'proxy-tlsuser': {type: 'string'},
+		'proxy-tlspassword': {type: 'string'},
+		'proxy-tlsauthtype': {type: 'string'},
+		'proxy-cert': {type: 'string'},
+		'proxy-cert-type': {type: 'string'},
+		'proxy-key': {type: 'string'},
+		'proxy-key-type': {type: 'string'},
+		'proxy-pass': {type: 'string'},
+		'proxy-ciphers': {type: 'string'},
+		'proxy-crlfile': {type: 'string'},
+		'proxy-ssl-allow-beast': {type: 'bool'},
+		'no-proxy-ssl-allow-beast': {type: 'bool', name: 'proxy-ssl-allow-beast', expand: false},
+		'login-options': {type: 'string'},
+		'proxy-cacert': {type: 'string'},
+		'proxy-capath': {type: 'string'},
+		'proxy-insecure': {type: 'bool'},
+		'no-proxy-insecure': {type: 'bool', name: 'proxy-insecure', expand: false},
+		'proxy-tlsv1': {type: 'bool'},
+		'socks5-basic': {type: 'bool'},
+		'no-socks5-basic': {type: 'bool', name: 'socks5-basic', expand: false},
+		'socks5-gssapi': {type: 'bool'},
+		'no-socks5-gssapi': {type: 'bool', name: 'socks5-gssapi', expand: false},
+		'etag-save': {type: 'string'},
+		'etag-compare': {type: 'string'},
+		'curves': {type: 'string'},
+		'fail': {type: 'bool'},
+		'no-fail': {type: 'bool', name: 'fail', expand: false},
+		'fail-early': {type: 'bool'},
+		'no-fail-early': {type: 'bool', name: 'fail-early', expand: false},
+		'styled-output': {type: 'bool'},
+		'no-styled-output': {type: 'bool', name: 'styled-output', expand: false},
+		'mail-rcpt-allowfails': {type: 'bool'},
+		'no-mail-rcpt-allowfails': {type: 'bool', name: 'mail-rcpt-allowfails', expand: false},
+		'fail-with-body': {type: 'bool'},
+		'no-fail-with-body': {type: 'bool', name: 'fail-with-body', expand: false},
+		'form': {type: 'string'},
+		'form-string': {type: 'string'},
+		'globoff': {type: 'bool'},
+		'no-globoff': {type: 'bool', name: 'globoff', expand: false},
+		'get': {type: 'bool'},
+		'request-target': {type: 'string'},
+		'help': {type: 'bool'},
+		'no-help': {type: 'bool', name: 'help', expand: false},
+		'header': {type: 'string'},
+		'proxy-header': {type: 'string'},
+		'include': {type: 'bool'},
+		'no-include': {type: 'bool', name: 'include', expand: false},
+		'head': {type: 'bool'},
+		'no-head': {type: 'bool', name: 'head', expand: false},
+		'junk-session-cookies': {type: 'bool'},
+		'no-junk-session-cookies': {type: 'bool', name: 'junk-session-cookies', expand: false},
+		'remote-header-name': {type: 'bool'},
+		'no-remote-header-name': {type: 'bool', name: 'remote-header-name', expand: false},
+		'insecure': {type: 'bool'},
+		'no-insecure': {type: 'bool', name: 'insecure', expand: false},
+		'doh-insecure': {type: 'bool'},
+		'no-doh-insecure': {type: 'bool', name: 'doh-insecure', expand: false},
+		'config': {type: 'string'},
+		'list-only': {type: 'bool'},
+		'no-list-only': {type: 'bool', name: 'list-only', expand: false},
+		'location': {type: 'bool'},
+		'no-location': {type: 'bool', name: 'location', expand: false},
+		'location-trusted': {type: 'bool'},
+		'no-location-trusted': {type: 'bool', name: 'location-trusted', expand: false},
+		'max-time': {type: 'string'},
+		'manual': {type: 'bool'},
+		'no-manual': {type: 'bool', name: 'manual', expand: false},
+		'netrc': {type: 'bool'},
+		'no-netrc': {type: 'bool', name: 'netrc', expand: false},
+		'netrc-optional': {type: 'bool'},
+		'no-netrc-optional': {type: 'bool', name: 'netrc-optional', expand: false},
+		'netrc-file': {type: 'string'},
+		'buffer': {type: 'bool'},
+		'no-buffer': {type: 'bool', name: 'buffer', expand: false},
+		'output': {type: 'string'},
+		'remote-name': {type: 'bool'},
+		'remote-name-all': {type: 'bool'},
+		'no-remote-name-all': {type: 'bool', name: 'remote-name-all', expand: false},
+		'output-dir': {type: 'string'},
+		'proxytunnel': {type: 'bool'},
+		'no-proxytunnel': {type: 'bool', name: 'proxytunnel', expand: false},
+		'ftp-port': {type: 'string'},
+		'disable': {type: 'bool'},
+		'no-disable': {type: 'bool', name: 'disable', expand: false},
+		'quote': {type: 'string'},
+		'range': {type: 'string'},
+		'remote-time': {type: 'bool'},
+		'no-remote-time': {type: 'bool', name: 'remote-time', expand: false},
+		'silent': {type: 'bool'},
+		'no-silent': {type: 'bool', name: 'silent', expand: false},
+		'show-error': {type: 'bool'},
+		'no-show-error': {type: 'bool', name: 'show-error', expand: false},
+		'telnet-option': {type: 'string'},
+		'upload-file': {type: 'string'},
+		'user': {type: 'string'},
+		'proxy-user': {type: 'string'},
+		'verbose': {type: 'bool'},
+		'no-verbose': {type: 'bool', name: 'verbose', expand: false},
+		'version': {type: 'bool'},
+		'no-version': {type: 'bool', name: 'version', expand: false},
+		'write-out': {type: 'string'},
+		'proxy': {type: 'string'},
+		'preproxy': {type: 'string'},
+		'request': {type: 'string'},
+		'speed-limit': {type: 'string'},
+		'speed-time': {type: 'string'},
+		'time-cond': {type: 'string'},
+		'parallel': {type: 'bool'},
+		'no-parallel': {type: 'bool', name: 'parallel', expand: false},
+		'parallel-max': {type: 'string'},
+		'parallel-immediate': {type: 'bool'},
+		'no-parallel-immediate': {type: 'bool', name: 'parallel-immediate', expand: false},
+		'progress-bar': {type: 'bool'},
+		'no-progress-bar': {type: 'bool', name: 'progress-bar', expand: false},
+		'progress-meter': {type: 'bool'},
+		'no-progress-meter': {type: 'bool', name: 'progress-meter', expand: false},
+		'next': {type: 'bool'},
+	};
 
-	// all of curl's short options have a long form
-	var optionAliases = {
+	var shortOptions = {
 		'0': 'http1.0',
 		'1': 'tlsv1',
 		'2': 'sslv2',
@@ -139,7 +404,6 @@ function curlToGo(curl) {
 		'm': 'max-time',
 		'M': 'manual',
 		'n': 'netrc',
-		// N is an alias for --no-buffer, not --buffer
 		'N': 'no-buffer',
 		'o': 'output',
 		'O': 'remote-name',
@@ -167,10 +431,44 @@ function curlToGo(curl) {
 		'#': 'progress-bar',
 		':': 'next',
 	};
+	// END GENERATED CURL OPTIONS
 
-	if (!curl.trim())
+
+	const shortened = {};
+	for (const [opt, val] of Object.entries(longOptions)) {
+		if (!val.hasOwnProperty('name'))
+			val.name = opt;
+
+		// curl lets you not type the full argument as long as it's unambiguous.
+		// So --sil instead of --silent is okay, --s is not.
+		// This doesn't apply to options starting with --no-
+		// Default 'expand' to true if not specified
+		const shouldExpand = !val.hasOwnProperty('expand') || val.expand;
+		delete val['expand'];
+		if (shouldExpand) {
+			for (let i = 1; i < opt.length; i++) {
+				var shortenedOpt = opt.slice(0, i);
+				if (!shortened.hasOwnProperty(shortenedOpt))
+					shortened[shortenedOpt] = [];
+				shortened[shortenedOpt].push(val);
+			}
+		}
+	}
+	for (const [shortenedOpt, vals] of Object.entries(shortened)) {
+		if (!longOptions.hasOwnProperty(shortenedOpt)) {
+			if (vals.length === 1) {
+				longOptions[shortenedOpt] = vals[0];
+			} else if (vals.length > 1) {
+				// More than one option shortens to this, it's ambiguous
+				longOptions[shortenedOpt] = null;
+			}
+		}
+	}
+
+	// If user is manually typing a curl command, hold off on showing an error
+	if (["", "c", "cu", "cur"].includes(curl.trim()))
 		return;
-	var cmd = parseCommand(curl, { boolFlags: boolOptions, aliases: optionAliases });
+	var cmd = parseCommand(curl, { longOptions, shortOptions });
 
 	if (cmd._[0] != "curl")
 		throw "Not a curl command";
@@ -251,10 +549,10 @@ function curlToGo(curl) {
 						go += "params := url.Values{}\n"
 						var params = new URLSearchParams(req.data.ascii);
 						params.forEach(function(fvalue, fkey){
-							go += 'params.Add("' + fkey + '", `' + fvalue + '`)\n' 
+							go += 'params.Add("' + fkey + '", `' + fvalue + '`)\n'
 						});
 						go += defaultPayloadVar+ ' := strings.NewReader(params.Encode())\n\n'
-				}else {
+				} else {
 					// not a json Content-Type, so treat as string
 					stringBody();
 				}
@@ -343,8 +641,8 @@ function curlToGo(curl) {
 		else if (
 			(cmd["data-binary"] && cmd["data-binary"].length > 0)
 			|| (cmd["data-raw"] && cmd["data-raw"].length > 0)
-		 ) {
-			 // for --data-binary and --data-raw, use method POST & data-type raw
+		) {
+			// for --data-binary and --data-raw, use method POST & data-type raw
 			relevant.method = "POST";
 			relevant.dataType = "raw";
 		}
@@ -467,9 +765,10 @@ function parseCommand(input, options) {
 		options = {};
 	}
 
-	var result = {_: []}, // what we return
-	    cursor = 0,       // iterator position
-	    token = "";       // current token (word or quoted string) being built
+	var result = {_: []},  // what we return
+		cursor = 0,        // iterator position
+		stillFlags = true, // "--" causes all remaining args to be positional
+		token = "";        // current token (word or quoted string) being built
 
 	// trim leading $ or # that may have been left in
 	input = input.trim();
@@ -478,7 +777,7 @@ function parseCommand(input, options) {
 
 	for (cursor = 0; cursor < input.length; cursor++) {
 		skipWhitespace();
-		if (input[cursor] == "-") {
+		if (input[cursor] == "-" && stillFlags) {
 			flagSet();
 		} else {
 			unflagged();
@@ -495,6 +794,13 @@ function parseCommand(input, options) {
 	function flagSet() {
 		// long flag form?
 		if (cursor < input.length-1 && input[cursor+1] == "-") {
+			// "--" on its own means the rest of the input args are treated as positional,
+			// even if they also start with "-" or "--"
+			if (cursor === input.length-2 || cursor < input.length-2 && whitespace(input[cursor+2])) {
+				stillFlags = false;
+				cursor += 2;
+				return;
+			}
 			return longFlag();
 		}
 
@@ -502,15 +808,20 @@ function parseCommand(input, options) {
 		cursor++; // skip leading dash
 		while (cursor < input.length && !whitespace(input[cursor]))
 		{
-			var flagName = fullName(input[cursor]);
-			if (typeof result[flagName] == 'undefined') {
-				result[flagName] = [];
-			}
+			const shortFlag = input[cursor];
 			cursor++; // skip the flag name
-			if (boolFlag(flagName))
-				result[flagName] = toBool(flagName);
-			else if (Array.isArray(result[flagName]))
-				result[flagName].push(nextString());
+
+			var [shortOpt, opt] = getShortOption(shortFlag);
+			if (typeof shortOpt === 'undefined' || typeof opt === 'undefined') {
+				throw "Unknown short flag: '" + shortOpt + "'";
+			}
+			if (typeof result[opt.name] === 'undefined') {
+				result[opt.name] = [];
+			}
+			if (opt.type === 'bool')
+				result[opt.name] = toBool(shortOpt);
+			else if (Array.isArray(result[opt.name]))
+				result[opt.name].push(nextString());
 		}
 	}
 
@@ -519,10 +830,15 @@ function parseCommand(input, options) {
 	function longFlag() {
 		cursor += 2; // skip leading dashes
 		var flagName = nextString("=");
-		if (boolFlag(flagName))
-			result[flagName] = toBool(flagName);
-		else {
-			if (typeof result[flagName] == 'undefined') {
+		var flag = options.longOptions[flagName];
+		if (flag === null) {
+			throw "Ambiguous flag: '--" + flagName + "'";
+		} else if (typeof flag === 'undefined') {
+			throw "Unknown flag: '--" + flagName + "'";
+		} else if (flag && flag.type === 'bool') {
+			result[flag.name] = toBool(flagName);
+		} else {
+			if (typeof result[flagName] === 'undefined') {
 				result[flagName] = [];
 			}
 			if (Array.isArray(result[flagName])) {
@@ -537,30 +853,22 @@ function parseCommand(input, options) {
 		result._.push(nextString());
 	}
 
-	// fullName returns the long name of a short flag
-	function fullName(flag) {
-		var alias = options.aliases[flag]
-		return alias ? alias : flag;
-	}
-
-	// boolFlag returns whether a flag is known to be boolean type
-	function boolFlag(flag) {
-		if (options.boolFlags instanceof Set) {
-			return options.boolFlags.has(flag);
-		}
-		if (Array.isArray(options.boolFlags)) {
-			for (var i = 0; i < options.boolFlags.length; i++) {
-				if (options.boolFlags[i] == flag)
-					return true;
-			}
-		}
-		return false;
+	// getShortOption looks up a one letter option and also returns the long option that
+	// it's short for.
+	function getShortOption(shortName) {
+		var shortOpt = options.shortOptions[shortName];
+		var longOpt = shortOpt ? options.longOptions[shortOpt] : undefined;
+		return [shortOpt, longOpt];
 	}
 
 	// toBool converts a long flag name to a boolean value.
 	// --verbose -> true
 	// --no-verbose -> false
 	function toBool(flag) {
+		// --no-disable-epsv and --no-disable-eprt
+		if (flag.startsWith('no-disable-')) {
+			return true;
+		}
 		return !(flag.startsWith('no-') || flag.startsWith('disable-'));
 	}
 
@@ -579,8 +887,8 @@ function parseCommand(input, options) {
 
 		var quoted = false,
 			quoteCh = "",
-			escaped = false;
-		quoteDS = false; // Dollar-Single-Quotes
+			escaped = false,
+			quoteDS = false; // Dollar-Single-Quotes
 
 		for (; cursor < input.length; cursor++) {
 			if (quoted) {
