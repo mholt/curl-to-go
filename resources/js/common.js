@@ -92,7 +92,7 @@ $(function()
 
 	// Fill in examples
 	$('#example1').click(function() {
-		$('#input').val('curl canhazip.com').keyup();
+		$('#input').val('curl icanhazip.com').keyup();
 	});
 	$('#example2').click(function() {
 		$('#input').val('curl https://api.example.com/surprise \\\n     -u banana:coconuts \\\n     -d "sample data"').keyup();
