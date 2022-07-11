@@ -49,7 +49,7 @@ $(function()
 	}).blur();
 
 	// Automatically do the conversion
-	$('#input').keyup(function()
+	$('#input').on('input', function()
 	{
 		var input = $(this).val();
 		if (!input)
