@@ -92,23 +92,23 @@ $(function()
 
 	// Fill in examples
 	$('#example1').click(function() {
-		$('#input').val('curl canhazip.com').keyup();
+		$('#input').val('curl canhazip.com').trigger('input');
 	});
 	$('#example2').click(function() {
-		$('#input').val('curl https://api.example.com/surprise \\\n     -u banana:coconuts \\\n     -d "sample data"').keyup();
+		$('#input').val('curl https://api.example.com/surprise \\\n     -u banana:coconuts \\\n     -d "sample data"').trigger('input');
 	});
 	$('#example3').click(function() {
-		$('#input').val('curl -H "Content-Type: application/json" -H "Authorization: Bearer b7d03a6947b217efb6f3ec3bd3504582" -d \'{"type":"A","name":"www","data":"162.10.66.0","priority":null,"port":null,"weight":null}\' "https://api.digitalocean.com/v2/domains/example.com/records"').keyup();
+		$('#input').val('curl -H "Content-Type: application/json" -H "Authorization: Bearer b7d03a6947b217efb6f3ec3bd3504582" -d \'{"type":"A","name":"www","data":"162.10.66.0","priority":null,"port":null,"weight":null}\' "https://api.digitalocean.com/v2/domains/example.com/records"').trigger('input');
 	});
 	$('#example4').click(function() {
-		$('#input').val('curl -u "demo" -d @file1.txt -d @file2.txt https://example.com/upload').keyup();
+		$('#input').val('curl -u "demo" -d @file1.txt -d @file2.txt https://example.com/upload').trigger('input');
 	});
 	$('#example5').click(function() {
-		$('#input').val("curl https://api.easypost.com/v2/shipments \\\n     -u API_KEY: \\\n     -d 'shipment[to_address][id]=adr_HrBKVA85' \\\n     -d 'shipment[from_address][id]=adr_VtuTOj7o' \\\n     -d 'shipment[parcel][id]=prcl_WDv2VzHp' \\\n     -d 'shipment[is_return]=true' \\\n     -d 'shipment[customs_info][id]=cstinfo_bl5sE20Y'").keyup();
+		$('#input').val("curl https://api.easypost.com/v2/shipments \\\n     -u API_KEY: \\\n     -d 'shipment[to_address][id]=adr_HrBKVA85' \\\n     -d 'shipment[from_address][id]=adr_VtuTOj7o' \\\n     -d 'shipment[parcel][id]=prcl_WDv2VzHp' \\\n     -d 'shipment[is_return]=true' \\\n     -d 'shipment[customs_info][id]=cstinfo_bl5sE20Y'").trigger('input');
 	});
-  $('#example6').click(function(){
-    $('#input').val('curl https://api.example.com/surprise -H "Content-Type: application/x-www-form-urlencoded" \\\n     --data "key1=value+1&key2=value%3A2"').keyup();
-  });
+	$('#example6').click(function(){
+		$('#input').val('curl https://api.example.com/surprise -H "Content-Type: application/x-www-form-urlencoded" \\\n     --data "key1=value+1&key2=value%3A2"').trigger('input');
+	});
 
 	var dark = false;
 	$("#dark").click(function()
